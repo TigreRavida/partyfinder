@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   loadSession, fetchSpot, fetchSpotMessages, sendSpotMessage,
-  subscribeSpotMessages, uploadSpotPhoto,
+  subscribeSpotMessages, uploadSpotPhoto, deleteSpot, renameSpot,
 } from '../lib/db';
 
 export default function Spot() {
@@ -13,6 +13,9 @@ export default function Spot() {
   const [msgs, setMsgs] = useState([]);
   const [draft, setDraft] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
   const fileRef = useRef(null);
   const endRef = useRef(null);
 
@@ -37,6 +40,15 @@ export default function Spot() {
     catch { setMsgs((c) => c.filter((m) => m.id !== optimistic.id)); alert('No se pudo enviar'); }
   };
 
+  const doDelete = async () => {
+    if (!confirm(`¿Eliminar el spot "${spot?.name}"?`)) return;
+    try { await deleteSpot(id); nav('/spots'); } catch (e) { alert('No se pudo eliminar: ' + e.message); }
+  };
+  const doRename = async () => {
+    if (!newName.trim()) return;
+    try { await renameSpot(id, newName.trim().toUpperCase()); setSpot((s) => ({ ...s, name: newName.trim().toUpperCase() })); setRenaming(false); setMenu(false); }
+    catch (e) { alert('No se pudo renombrar: ' + e.message); }
+  };
   const pickPhoto = () => fileRef.current?.click();
   const onFile = async (e) => {
     const file = e.target.files?.[0];
@@ -59,6 +71,7 @@ export default function Spot() {
         <button style={S.photoIcon} onClick={pickPhoto} disabled={uploading} title="Foto del lugar">
           {uploading ? '…' : (spot?.photo_url ? '🖼️' : '📷')}
         </button>
+        <button style={S.gearIcon} onClick={() => setMenu(true)} title="Editar / eliminar">⚙</button>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
       </div>
 
@@ -84,6 +97,26 @@ export default function Spot() {
         <div ref={endRef} />
       </div>
 
+      {menu && (
+        <div style={S.modalWrap} onClick={() => setMenu(false)}>
+          <div style={S.sheet} onClick={(e) => e.stopPropagation()}>
+            <div className="neon-text" style={{ '--nc': 'var(--orange)', fontSize: 20, fontWeight: 900, textAlign: 'center', marginBottom: 16 }}>{spot?.name}</div>
+            <button style={{ ...S.sheetBtn, borderColor: 'var(--cyan)', color: 'var(--cyan)' }} onClick={() => { setNewName(spot?.name || ''); setRenaming(true); }}>✎ Editar nombre</button>
+            <button style={{ ...S.sheetBtn, borderColor: 'var(--bad)', color: 'var(--bad)' }} onClick={doDelete}>🗑 Eliminar spot</button>
+            <button style={{ ...S.sheetBtn, borderColor: 'var(--card-border)', color: 'var(--ink-dim)' }} onClick={() => setMenu(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+      {renaming && (
+        <div style={S.modalWrap} onClick={() => setRenaming(false)}>
+          <div style={S.sheet} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 12px', fontWeight: 900, fontFamily: 'inherit', color: 'var(--ink)' }}>Nuevo nombre</h3>
+            <input autoFocus value={newName} onChange={(e) => setNewName(e.target.value.toUpperCase())}
+              style={S.renameInput} onKeyDown={(e) => e.key === 'Enter' && doRename()} />
+            <button style={{ ...S.sheetBtn, borderColor: 'var(--cyan)', color: 'var(--cyan)' }} onClick={doRename}>GUARDAR</button>
+          </div>
+        </div>
+      )}
       <div style={S.inputBar}>
         <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mensaje"
           type="text" autoComplete="off" autoCorrect="off" autoCapitalize="sentences" enterKeyHint="send" name="nemo-msg"
@@ -99,6 +132,11 @@ const S = {
   head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 12px) 16px 12px', borderBottom: '1px solid rgba(255,107,44,0.3)', background: 'rgba(8,6,10,0.7)', flexShrink: 0 },
   back: { width: 34, height: 34, borderRadius: 17, background: 'rgba(8,6,10,0.8)', border: '1px solid var(--card-border)', color: 'var(--ink)', fontSize: 22, fontWeight: 900, fontFamily: 'inherit', flexShrink: 0 },
   photoIcon: { width: 40, height: 40, borderRadius: 12, background: 'rgba(53,231,225,0.12)', border: '1.5px solid var(--cyan)', fontSize: 18, flexShrink: 0 },
+  gearIcon: { width: 40, height: 40, borderRadius: 12, background: 'rgba(255,157,46,0.12)', border: '1.5px solid var(--orange)', fontSize: 18, flexShrink: 0, color: 'var(--ink)' },
+  modalWrap: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 30 },
+  sheet: { background: 'rgba(13,11,16,0.98)', border: '1px solid var(--card-border)', borderRadius: 20, padding: 18, width: '100%', maxWidth: 340 },
+  sheetBtn: { display: 'block', width: '100%', border: '1.5px solid', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 900, background: 'rgba(8,6,10,0.5)', marginBottom: 10, fontFamily: 'inherit' },
+  renameInput: { width: '100%', background: 'var(--card)', border: '1.5px solid var(--card-border)', borderRadius: 14, padding: 15, color: 'var(--ink)', fontSize: 16, marginBottom: 12, outline: 'none', fontFamily: 'inherit' },
   photoStrip: { padding: '10px 16px 0', flexShrink: 0 },
   photoThumb: { width: '100%', height: 120, objectFit: 'cover', borderRadius: 14, border: '1.5px solid var(--cyan)', display: 'block' },
   msgs: { flex: 1, minHeight: 0, overflowY: 'auto', padding: 16 },

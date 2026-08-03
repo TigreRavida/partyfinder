@@ -33,9 +33,16 @@ export function deviceId() {
 }
 
 /* --------------------- presencia --------------------- */
+// ¿este dispositivo ya entró a este grupo con algún nombre? (evita duplicados)
+export async function findMyIdentity(group) {
+  const { data } = await supabase.from('presence')
+    .select('member').eq('group_code', group).eq('device_id', deviceId()).limit(1);
+  return data?.[0]?.member ?? null;
+}
 export async function upsertPresence({ group, member, lat, lon, accuracy, battery, status, avatar_url }) {
   const row = {
     group_code: group, member, lat, lon, accuracy: accuracy ?? 8,
+    device_id: deviceId(),
     updated_at: new Date().toISOString(),
   };
   if (battery !== undefined) row.battery = battery;
@@ -86,9 +93,10 @@ export async function fetchConversation(group, kind, me, other) {
     (m.author === me && m.recipient === other) || (m.author === other && m.recipient === me));
 }
 export async function sendGroupMessage(group, kind, author, body, recipient) {
-  await supabase.from('group_messages').insert({
+  const { error } = await supabase.from('group_messages').insert({
     group_code: group, kind, author, body: body.trim(), recipient: recipient ?? null,
   });
+  if (error) { console.error('sendGroupMessage:', error.message); throw error; }
 }
 export function subscribeConversation(group, onMsg) {
   const ch = supabase.channel('gm:' + group + ':' + Math.random().toString(36).slice(2))

@@ -36,7 +36,7 @@ export default function Conv() {
     const optimistic = { id: 'tmp_' + Date.now(), author: session.name, body, kind, recipient: to ?? null, created_at: new Date().toISOString() };
     setMsgs((c) => [...c, optimistic]);
     try { await sendGroupMessage(session.group, kind, session.name, body, to); }
-    catch { setMsgs((c) => c.filter((m) => m.id !== optimistic.id)); alert('No se pudo enviar'); }
+    catch (e) { setMsgs((c) => c.filter((m) => m.id !== optimistic.id)); alert('No se pudo enviar: ' + (e?.message || 'error') + (e?.code ? ' ['+e.code+']' : '')); }
   };
 
   return (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveSession } from '../lib/db';
+import { saveSession, findMyIdentity } from '../lib/db';
 import { Logo } from '../components/Logo';
 
 export default function Onboarding() {
@@ -11,9 +11,19 @@ export default function Onboarding() {
   const [group, setGroup] = useState(preset ? preset.toUpperCase() : '');
   const ready = name.trim() && group.trim();
 
-  const go = () => {
+  const go = async () => {
     if (!ready) return;
-    saveSession({ name: name.trim(), group: group.trim().toUpperCase() });
+    const g = group.trim().toUpperCase();
+    // si este dispositivo ya entró a este grupo, reusar esa identidad (no duplicar)
+    let finalName = name.trim();
+    try {
+      const existing = await findMyIdentity(g);
+      if (existing && existing !== finalName) {
+        const useExisting = confirm(`Este dispositivo ya entró a "${g}" como "${existing}". ¿Continuar como ${existing}?`);
+        if (useExisting) finalName = existing;
+      }
+    } catch {}
+    saveSession({ name: finalName, group: g });
     nav('/menu');
   };
 
