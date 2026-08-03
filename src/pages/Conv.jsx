@@ -20,7 +20,7 @@ export default function Conv() {
     fetchConversation(session.group, kind, me, to).then(setMsgs).catch(() => {});
     markConvSeen(kind, to);
     return subscribeConversation(session.group, (m) => {
-      if (isGroup && m.kind === 'group') { setMsgs((c) => [...c, m]); markConvSeen('group'); }
+      if (isGroup && m.kind === 'group') { setMsgs((c) => c.some((x) => x.id === m.id) ? c : [...c, m]); markConvSeen('group'); }
       else if (!isGroup && m.kind === 'dm' &&
         ((m.author === me && m.recipient === to) || (m.author === to && m.recipient === me))) {
         setMsgs((c) => [...c, m]); markConvSeen('dm', to);
@@ -33,7 +33,10 @@ export default function Conv() {
   const send = async () => {
     if (!draft.trim()) return;
     const body = draft.trim(); setDraft('');
-    try { await sendGroupMessage(session.group, kind, session.name, body, to); } catch {}
+    const optimistic = { id: 'tmp_' + Date.now(), author: session.name, body, kind, recipient: to ?? null, created_at: new Date().toISOString() };
+    setMsgs((c) => [...c, optimistic]);
+    try { await sendGroupMessage(session.group, kind, session.name, body, to); }
+    catch { setMsgs((c) => c.filter((m) => m.id !== optimistic.id)); alert('No se pudo enviar'); }
   };
 
   return (
@@ -59,7 +62,8 @@ export default function Conv() {
         <div ref={endRef} />
       </div>
       <div style={S.inputBar}>
-        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={isGroup ? 'Mensaje al grupo…' : `Mensaje a ${to}…`}
+        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mensaje"
+          type="text" autoComplete="off" autoCorrect="off" autoCapitalize="sentences" enterKeyHint="send" name="nemo-msg"
           style={S.input} onKeyDown={(e) => e.key === 'Enter' && send()} />
         <button style={{ ...S.send, opacity: draft.trim() ? 1 : 0.4 }} onClick={send}>➤</button>
       </div>
