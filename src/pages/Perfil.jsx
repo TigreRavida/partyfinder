@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { loadSession, saveSession, fetchPresence, uploadAvatar, setMyStatus, setMyAvatar } from '../lib/db';
 import { Avatar } from '../components/Avatar';
 
+const AVATARS = Array.from({ length: 15 }, (_, i) => `/avatars/av${i + 1}.jpg`);
+
 export default function Perfil() {
   const nav = useNavigate();
   const session = loadSession();
@@ -24,6 +26,11 @@ export default function Perfil() {
     const file = e.target.files?.[0]; if (!file) return;
     try { const url = await uploadAvatar(session.group, session.name, file); setAvatar(url); }
     catch (err) { alert('No se pudo subir: ' + err.message); }
+  };
+
+  const chooseAvatar = async (url) => {
+    setAvatar(url);
+    try { await setMyAvatar(session.group, session.name, url); } catch {}
   };
 
   const save = async () => {
@@ -53,6 +60,15 @@ export default function Perfil() {
           <input ref={fileRef} type="file" accept="image/*" onChange={changeAvatar} style={{ display: 'none' }} />
         </div>
 
+        <div style={S.avatarLabel}>Elegí un avatar o subí tu foto</div>
+        <div style={S.grid}>
+          {AVATARS.map((url) => (
+            <img key={url} src={url} alt="" onClick={() => chooseAvatar(url)}
+              style={{ ...S.gridItem, borderColor: avatar === url ? 'var(--cyan)' : 'transparent',
+                boxShadow: avatar === url ? '0 0 10px rgba(53,231,225,0.7)' : 'none' }} />
+          ))}
+        </div>
+
         <label style={S.label}>TU NOMBRE</label>
         <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
           value={name} onChange={(e) => setName(e.target.value)} placeholder="Cómo te dicen" />
@@ -76,6 +92,9 @@ const S = {
   back: { color: 'var(--ink-dim)', fontSize: 14, fontWeight: 900, fontFamily: 'inherit', background: 'none' },
   body: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 20px 20px' },
   editBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, background: 'var(--cyan)', color: '#04231F', fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid var(--bg)' },
+  avatarLabel: { color: 'var(--ink-dim)', fontSize: 12, textAlign: 'center', marginBottom: 12 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 8 },
+  gridItem: { width: '100%', aspectRatio: '1', borderRadius: 12, objectFit: 'cover', border: '2px solid transparent', cursor: 'pointer' },
   label: { display: 'block', color: 'var(--ink-dim)', fontSize: 12, fontWeight: 900, letterSpacing: 2, marginBottom: 8, marginTop: 18 },
   input: { width: '100%', padding: '14px 16px', color: 'var(--ink)', fontSize: 16, fontWeight: 600, outline: 'none', background: 'rgba(8,6,10,0.5)', fontFamily: 'inherit' },
   save: { width: '100%', padding: 16, fontSize: 15, fontWeight: 900, letterSpacing: 2, marginTop: 28, color: '#fff' },

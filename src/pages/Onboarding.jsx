@@ -29,7 +29,7 @@ export default function Onboarding() {
       )}
 
       <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
-        value={name} onChange={(e) => setName(e.target.value)} placeholder="NICK" />
+        value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE" />
       <input className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.input }}
         value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="GRUPO"
         disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()} />
