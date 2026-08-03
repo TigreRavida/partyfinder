@@ -8,6 +8,7 @@ import Miembros from './pages/Miembros';
 import Spot from './pages/Spot';
 import Menu from './pages/Menu';
 import Timetable from './pages/Timetable';
+import Perfil from './pages/Perfil';
 import { loadSession } from './lib/db';
 
 function Frame({ children }) {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/spot/:id" element={<Spot />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/lineup" element={<Timetable />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </Frame>
     </BrowserRouter>

@@ -176,15 +176,13 @@ export default function Mapa() {
         </div>
       </div>
 
-      {/* barra superior */}
+      {/* barra superior — rotada para leerse con el teléfono girado */}
       <div style={S.top}>
         <button style={S.pill} onClick={() => nav('/spots')}>‹ SALIR</button>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
-            {VENUE.name.toUpperCase()} · {active} ● {showMon ? '▲' : '▼'}
-          </button>
-          <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅</button>
-        </div>
+        <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
+          {VENUE.name.toUpperCase()} · {active} ● {showMon ? '▲' : '▼'}
+        </button>
+        <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅 LINE-UP</button>
       </div>
 
       {showMon && (
@@ -274,12 +272,12 @@ function Joystick() {
 const S = {
   root: { position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' },
   stage: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', overflow: 'hidden' },
-  person: { position: 'absolute', transform: 'translate(-50%,-50%) rotate(-90deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', padding: 0, whiteSpace: 'nowrap' },
+  person: { position: 'absolute', transform: 'translate(-50%,-50%) rotate(90deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', padding: 0, whiteSpace: 'nowrap' },
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
-  top: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 12px)', left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 10 },
-  pill: { background: 'rgba(8,6,10,0.85)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 15px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)' },
+  top: { position: 'absolute', top: 0, bottom: 0, left: 6, width: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 20, zIndex: 10, pointerEvents: 'none' },
+  pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '7px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', transform: 'rotate(90deg)', whiteSpace: 'nowrap', pointerEvents: 'auto' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },

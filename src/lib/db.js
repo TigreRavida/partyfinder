@@ -167,6 +167,15 @@ export async function uploadSpotPhoto(spotId, file) {
   return url;
 }
 
+export async function deleteSpot(id) {
+  const { error } = await supabase.from('spots').delete().eq('id', id);
+  if (error) { console.error('deleteSpot:', error.message); throw error; }
+}
+export async function renameSpot(id, name) {
+  const { error } = await supabase.from('spots').update({ name }).eq('id', id);
+  if (error) { console.error('renameSpot:', error.message); throw error; }
+}
+
 export function subscribeSpots(group, onChange) {
   const ch = supabase.channel('spots:' + group + ':' + Math.random().toString(36).slice(2))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'spots', filter: `group_code=eq.${group}` }, onChange)
