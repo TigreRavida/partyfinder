@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   loadSession, fetchSpots, createSpot, subscribeSpots, deviceId,
-  fetchPresence, deleteSpot, renameSpot,
+  fetchPresence, deleteSpot, renameSpot, upsertPresence,
 } from '../lib/db';
-import { simXY } from '../lib/geo';
+import { simXY, currentLatLon } from '../lib/geo';
 import { metersToLatLon, VENUE } from '../lib/venue';
 import { TabBar } from '../components/TabBar';
 import { Avatar } from '../components/Avatar';
@@ -39,16 +39,19 @@ export default function Spots() {
   const countAt = useMemo(() => {
     const fn = (sp) => {
       const spot = metersToLatLon(sp.x, sp.y);
+      // incluir mi posición local + la de todos, sin duplicarme
+      const mine = currentLatLon();
+      const list = people.filter((p) => p.member !== session?.name && p.lat != null);
+      if (mine) list.push({ member: session?.name, lat: mine.lat, lon: mine.lon });
       let n = 0;
-      for (const p of people) {
-        if (p.lat == null) continue;
+      for (const p of list) {
         const d = Math.hypot((p.lat - spot.lat) * kLat, (p.lon - spot.lon) * kLon);
         if (d <= 10) n++;
       }
       return n;
     };
     return fn;
-  }, [people]);
+  }, [people, session?.name]);
 
   const startPress = (sp) => { pressTimer.current = setTimeout(() => setActionSpot(sp), 500); };
   const cancelPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
@@ -69,6 +72,10 @@ export default function Spots() {
     setSaving(true);
     try {
       const { mx, my } = simXY();
+      // publicar mi presencia en la posición actual antes de crear el spot,
+      // así el creador cuenta dentro de su propio spot
+      const ll = currentLatLon() || metersToLatLon(mx, my);
+      try { await upsertPresence({ group: session.group, member: session.name, lat: ll.lat, lon: ll.lon, accuracy: 8 }); } catch {}
       await createSpot(session.group, name.trim().toUpperCase(), mx, my, deviceId(), session.name);
       setName(''); setCreating(false);
       fetchSpots(session.group).then(setSpots).catch(() => {});

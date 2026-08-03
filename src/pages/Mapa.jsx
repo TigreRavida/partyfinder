@@ -235,23 +235,35 @@ function Row({ k, v, c }) {
   return <div style={S.row}><span style={{ ...S.rowK, color: c || 'var(--ink)' }}>{k}</span><span style={{ ...S.rowV, color: c || 'var(--ink)' }}>{v}</span></div>;
 }
 
-// joystick de simulación — movimiento continuo y suave con requestAnimationFrame
+// joystick de simulación — cada flecha mueve el punto en la dirección que VES
+// en el mapa (el plano está rotado 90°, así que compensamos esa rotación).
 function Joystick() {
-  const dirRef = useRef(null);   // dirección activa
+  const dirRef = useRef(null);
   const rafRef = useRef(null);
   const lastRef = useRef(0);
 
+  // El plano se dibuja con rotate(90°). Para que el punto se mueva donde el
+  // usuario ve la flecha, mapeamos cada flecha al vector (mx,my) del mundo que,
+  // tras la rotación, apunta en esa dirección en pantalla:
+  //   ▲ arriba en pantalla  → norte del plano
+  //   ▼ abajo               → sur
+  //   ◀ izquierda           → oeste
+  //   ▶ derecha             → este
+  // (mx = este/oeste, my = norte/sur). Con el plano rotado 90° horario:
+  const VECTORS = {
+    up:    { mx: 0,  my: 1 },   // norte
+    down:  { mx: 0,  my: -1 },  // sur
+    left:  { mx: -1, my: 0 },   // oeste
+    right: { mx: 1,  my: 0 },   // este
+  };
+
   const loop = (t) => {
     if (!dirRef.current) return;
-    const dt = lastRef.current ? (t - lastRef.current) / 1000 : 0;
+    const dt = lastRef.current ? (t - lastRef.current) / 1000 : 0.016;
     lastRef.current = t;
-    const SPEED = 8; // metros por segundo (rápido para testear cómodo)
-    const d = SPEED * dt;
-    const dir = dirRef.current;
-    if (dir === 'up') simMove(d, 0);
-    if (dir === 'down') simMove(-d, 0);
-    if (dir === 'left') simMove(0, d);
-    if (dir === 'right') simMove(0, -d);
+    const SPEED = 8; // m/s — constante en cualquier dirección
+    const v = VECTORS[dirRef.current];
+    simMove(v.mx * SPEED * dt, v.my * SPEED * dt);
     rafRef.current = requestAnimationFrame(loop);
   };
   const start = (dir) => {
@@ -288,7 +300,7 @@ const S = {
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
-  top: { position: 'absolute', top: 0, bottom: 0, left: 6, width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 20, zIndex: 10, pointerEvents: 'none' },
+  top: { position: 'absolute', top: 0, bottom: 0, left: 6, width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 12, paddingTop: 'max(env(safe-area-inset-top), 60px)', paddingBottom: 'max(env(safe-area-inset-bottom), 60px)', zIndex: 10, pointerEvents: 'none' },
   pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '7px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', transform: 'rotate(90deg)', whiteSpace: 'nowrap', pointerEvents: 'auto' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
