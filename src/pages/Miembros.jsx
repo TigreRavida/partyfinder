@@ -1,44 +1,137 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadSession, clearSession, fetchPresence, seedTestMembers, clearTestMembers } from '../lib/db';
+import { VENUE, stageAt, insideVenue } from '../lib/venue';
 import { Avatar } from '../components/Avatar';
+
+const STALE = 15 * 60e3;
 
 export default function Miembros() {
   const nav = useNavigate();
   const session = loadSession();
   const [rows, setRows] = useState([]);
+
+  const refresh = () => fetchPresence(session.group).then(setRows).catch(() => {});
   useEffect(() => {
     if (!session) { nav('/'); return; }
-    fetchPresence(session.group).then(setRows).catch(() => {});
+    refresh();
+    const t = setInterval(refresh, 12000);
+    return () => clearInterval(t);
   }, []);
+
+  // agrupar: dentro del predio (por escenario o "en el predio"), fuera, y sin señal
+  const groups = useMemo(() => {
+    const now = Date.now();
+    const inStage = {};   // escenario -> [gente]
+    const inVenue = [];   // dentro del predio pero no en un escenario puntual
+    const outside = [];   // fuera del predio
+    const noSignal = [];  // sin ubicación reciente
+    for (const m of rows) {
+      const age = now - new Date(m.updated_at || 0).getTime();
+      const stale = age > STALE || m.lat == null;
+      if (stale) { noSignal.push(m); continue; }
+      if (insideVenue(m.lat, m.lon)) {
+        const st = stageAt(m.lat, m.lon);
+        if (st) { (inStage[st] ??= []).push(m); }
+        else inVenue.push(m);
+      } else {
+        outside.push(m);
+      }
+    }
+    return { inStage, inVenue, outside, noSignal };
+  }, [rows]);
+
   const invite = () => {
     const url = `${window.location.origin}/?join=${encodeURIComponent(session.group)}`;
-    if (navigator.share) navigator.share({ title: 'PartyFinder', text: `Sumate a mi grupo en PartyFinder 🎉`, url });
+    if (navigator.share) navigator.share({ title: 'NEMO', text: 'Sumate a mi grupo en NEMO 🎉', url });
     else { navigator.clipboard.writeText(url); alert('Link copiado: ' + url); }
   };
   const leave = () => { if (confirm('¿Salir del grupo?')) { clearSession(); nav('/'); } };
-  const seed = async () => { try { const n = await seedTestMembers(session.group); alert(n + ' integrantes de prueba agregados'); fetchPresence(session.group).then(setRows); } catch (e) { alert('Error: ' + e.message); } };
-  const unseed = async () => { await clearTestMembers(session.group); fetchPresence(session.group).then(setRows); };
+  const seed = async () => { try { const n = await seedTestMembers(session.group); alert(n + ' de prueba agregados'); refresh(); } catch (e) { alert('Error: ' + e.message); } };
+  const unseed = async () => { await clearTestMembers(session.group); refresh(); };
+
+  const Person = ({ m, color }) => (
+    <div className="neon-box" style={{ '--nc': color, ...S.row }}>
+      <Avatar name={m.member} uri={m.avatar_url} size={44} />
+      <div style={{ flex: 1 }}>
+        <div className="neon-text" style={{ '--nc': color, ...S.name }}>
+          {m.member}{m.member === session?.name ? ' (vos)' : ''}
+        </div>
+        {m.status && <div style={S.status}>"{m.status}"</div>}
+      </div>
+      {m.battery != null && <div style={{ ...S.batt, color: m.battery <= 20 ? 'var(--bad)' : 'var(--ink-dim)' }}>{m.battery}%</div>}
+    </div>
+  );
+
+  const Section = ({ label, count, color, children }) => (
+    <div style={{ marginBottom: 18 }}>
+      <div style={S.sectionHead}>
+        <span className="neon-text" style={{ '--nc': color, ...S.sectionLabel }}>{label}</span>
+        <span style={{ ...S.sectionCount, color }}>{count}</span>
+      </div>
+      {children}
+    </div>
+  );
+
+  const total = rows.length;
+  const insideCount = Object.values(groups.inStage).reduce((a, l) => a + l.length, 0) + groups.inVenue.length;
+
   return (
     <div style={S.root}>
       <div style={S.head}>
         <button style={S.back} onClick={() => nav('/spots')}>‹ SPOTS</button>
-        <div style={S.title}>Grupo · {session?.group}</div>
+        <span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 18, fontWeight: 900 }}>GRUPO {session?.group}</span>
       </div>
+
       <div style={{ padding: '0 16px' }}>
-        {rows.map((m) => (
-          <div key={m.member} style={S.row}>
-            <Avatar name={m.member} uri={m.avatar_url} size={46} />
-            <div style={{ flex: 1 }}>
-              <div style={S.name}>{m.member}{m.member === session?.name ? '  (vos)' : ''}</div>
-              {m.status && <div style={S.status}>"{m.status}"</div>}
-            </div>
-          </div>
-        ))}
+        {/* resumen */}
+        <div style={S.summary}>
+          <div style={S.sumItem}><div className="neon-text" style={{ '--nc': 'var(--cyan)', ...S.sumN }}>{total}</div><div style={S.sumL}>EN LA APP</div></div>
+          <div style={S.sumItem}><div className="neon-text" style={{ '--nc': 'var(--green)', ...S.sumN }}>{insideCount}</div><div style={S.sumL}>EN EL EVENTO</div></div>
+          <div style={S.sumItem}><div className="neon-text" style={{ '--nc': 'var(--amber)', ...S.sumN }}>{groups.outside.length}</div><div style={S.sumL}>FUERA</div></div>
+        </div>
+
+        {/* por escenario */}
+        {VENUE.stages.map((st) => {
+          const people = groups.inStage[st.name];
+          if (!people?.length) return null;
+          return (
+            <Section key={st.name} label={st.name} count={people.length} color="var(--magenta)">
+              {people.map((m) => <Person key={m.member} m={m} color="var(--magenta)" />)}
+            </Section>
+          );
+        })}
+
+        {/* dentro del predio sin escenario puntual */}
+        {groups.inVenue.length > 0 && (
+          <Section label="EN EL PREDIO" count={groups.inVenue.length} color="var(--green)">
+            {groups.inVenue.map((m) => <Person key={m.member} m={m} color="var(--green)" />)}
+          </Section>
+        )}
+
+        {/* fuera */}
+        {groups.outside.length > 0 && (
+          <Section label="FUERA DEL EVENTO" count={groups.outside.length} color="var(--amber)">
+            {groups.outside.map((m) => <Person key={m.member} m={m} color="var(--amber)" />)}
+          </Section>
+        )}
+
+        {/* sin señal */}
+        {groups.noSignal.length > 0 && (
+          <Section label="SIN UBICACIÓN" count={groups.noSignal.length} color="var(--ink-faint)">
+            {groups.noSignal.map((m) => <Person key={m.member} m={m} color="var(--ink-faint)" />)}
+          </Section>
+        )}
+
+        {total === 0 && <p style={S.empty}>Todavía no hay nadie en el grupo. Invitá gente 👇</p>}
       </div>
-      <button style={S.invite} onClick={invite}>INVITAR GENTE</button>
-      <div style={{ margin: '20px 16px 0', padding: 14, border: '1px dashed var(--card-border)', borderRadius: 12 }}>
-        <div style={{ color: 'var(--ink-faint)', fontSize: 11, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>MODO PRUEBA</div>
+
+      <button className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.invite }} onClick={invite}>
+        <span className="neon-text" style={{ '--nc': 'var(--magenta)' }}>INVITAR GENTE</span>
+      </button>
+
+      <div style={S.testWrap}>
+        <div style={S.testLabel}>MODO PRUEBA</div>
         <button style={S.testBtn} onClick={seed}>+ Agregar 8 integrantes de prueba</button>
         <button style={{ ...S.testBtn, color: 'var(--ink-dim)', marginTop: 8 }} onClick={unseed}>Quitar integrantes de prueba</button>
       </div>
@@ -46,15 +139,26 @@ export default function Miembros() {
     </div>
   );
 }
+
 const S = {
   root: { flex: 1, overflowY: 'auto', paddingBottom: 40 },
   head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 16px) 16px 16px' },
-  back: { color: 'var(--ink-dim)', fontSize: 14, fontWeight: 900 },
-  title: { fontSize: 18, fontWeight: 900 },
-  row: { display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(16,13,20,0.6)', border: '1px solid var(--violet)', borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: '0 0 8px rgba(176,107,255,0.2)' },
+  back: { color: 'var(--ink-dim)', fontSize: 14, fontWeight: 900, fontFamily: 'inherit' },
+  summary: { display: 'flex', gap: 10, marginBottom: 22 },
+  sumItem: { flex: 1, background: 'rgba(8,6,10,0.5)', border: '1px solid var(--card-border)', borderRadius: 14, padding: '14px 8px', textAlign: 'center' },
+  sumN: { fontSize: 26, fontWeight: 900 },
+  sumL: { color: 'var(--ink-dim)', fontSize: 10, fontWeight: 900, letterSpacing: 1, marginTop: 4 },
+  sectionHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingLeft: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: 900, letterSpacing: 2 },
+  sectionCount: { fontSize: 15, fontWeight: 900 },
+  row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10 },
   name: { fontSize: 16, fontWeight: 900 },
-  status: { color: 'var(--cyan)', fontSize: 14, fontStyle: 'italic', marginTop: 4 },
-  invite: { display: 'block', margin: '20px 16px 0', width: 'calc(100% - 32px)', background: 'rgba(255,61,184,0.15)', border: '2px solid var(--magenta)', color: 'var(--magenta)', borderRadius: 16, padding: 18, fontSize: 15, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 20px rgba(255,61,184,0.5)' },
-  testBtn: { display: 'block', width: '100%', background: 'var(--bg-elev)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, color: 'var(--cyan)', fontSize: 13, fontWeight: 700 },
-  leave: { display: 'block', margin: '16px auto', color: 'var(--ink-dim)', fontSize: 13, fontWeight: 700 },
+  status: { color: 'var(--cyan)', fontSize: 13.5, fontStyle: 'italic', marginTop: 3 },
+  batt: { fontSize: 13, fontWeight: 900 },
+  invite: { display: 'block', margin: '10px 16px 0', width: 'calc(100% - 32px)', padding: 18, fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff' },
+  testWrap: { margin: '20px 16px 0', padding: 14, border: '1px dashed var(--card-border)', borderRadius: 12 },
+  testLabel: { color: 'var(--ink-faint)', fontSize: 11, fontWeight: 900, letterSpacing: 1, marginBottom: 10 },
+  testBtn: { display: 'block', width: '100%', background: 'rgba(8,6,10,0.5)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, color: 'var(--cyan)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit' },
+  leave: { display: 'block', margin: '16px auto', color: 'var(--ink-dim)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', background: 'none' },
+  empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', textAlign: 'center', marginTop: 30 },
 };

@@ -76,7 +76,7 @@ const S = {
   mine: { background: 'rgba(53,231,225,0.16)', border: '1px solid var(--cyan)', boxShadow: '0 0 8px rgba(53,231,225,0.3)', borderBottomRightRadius: 4 },
   theirs: { background: 'rgba(176,107,255,0.12)', border: '1px solid var(--violet)', boxShadow: '0 0 8px rgba(176,107,255,0.25)', borderBottomLeftRadius: 4 },
   author: { color: 'var(--magenta)', fontSize: 11, fontWeight: 900, marginBottom: 2 },
-  empty: { color: 'var(--ink-dim)', fontSize: 14, textAlign: 'center', marginTop: 50 },
+  empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', margin: 0, textAlign: 'center', marginTop: 50 },
   inputBar: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px calc(env(safe-area-inset-bottom) + 10px)', borderTop: '1px solid rgba(176,107,255,0.3)', background: 'rgba(8,6,10,0.8)' },
   input: { flex: 1, background: 'var(--card)', border: '1.5px solid var(--card-border)', borderRadius: 20, padding: '10px 15px', color: 'var(--ink)', fontSize: 15, outline: 'none' },
   send: { width: 44, height: 44, borderRadius: 22, background: 'rgba(53,231,225,0.18)', border: '1.5px solid var(--cyan)', color: 'var(--cyan)', fontSize: 18, fontWeight: 900, boxShadow: '0 0 12px rgba(53,231,225,0.5)', flexShrink: 0 },

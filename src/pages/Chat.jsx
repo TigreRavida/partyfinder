@@ -92,5 +92,5 @@ const S = {
   rowName: { fontSize: 16, fontWeight: 900 },
   rowSub: { fontSize: 13, marginTop: 2 },
   badge: { borderRadius: 999, color: '#fff', minWidth: 24, height: 24, padding: '0 8px', color: '#00201D', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 8px rgba(53,231,225,0.6)' },
-  empty: { color: 'var(--ink-dim)', fontSize: 14, textAlign: 'center', marginTop: 40 },
+  empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', margin: 0, textAlign: 'center', marginTop: 40 },
 };

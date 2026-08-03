@@ -5,6 +5,7 @@ import Chat from './pages/Chat';
 import Conv from './pages/Conv';
 import Mapa from './pages/Mapa';
 import Miembros from './pages/Miembros';
+import Spot from './pages/Spot';
 import { loadSession } from './lib/db';
 
 function Frame({ children }) {
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/conv" element={<Conv />} />
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/miembros" element={<Miembros />} />
+          <Route path="/spot/:id" element={<Spot />} />
         </Routes>
       </Frame>
     </BrowserRouter>

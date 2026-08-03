@@ -123,6 +123,38 @@ export async function createSpot(group, name, x, y, author_id, author) {
   if (error) { console.error('createSpot:', error.message); throw error; }
   return data;
 }
+export async function fetchSpot(id) {
+  const { data } = await supabase.from('spots').select('*').eq('id', id).single();
+  return data;
+}
+export async function fetchSpotMessages(spotId) {
+  const { data } = await supabase.from('spot_messages').select('*').eq('spot_id', spotId).order('created_at', { ascending: true });
+  return data ?? [];
+}
+export async function sendSpotMessage(spotId, group, author, body) {
+  const { error } = await supabase.from('spot_messages').insert({ spot_id: spotId, group_code: group, author, body: body.trim() });
+  if (error) { console.error('sendSpotMessage:', error.message); throw error; }
+}
+export function subscribeSpotMessages(spotId, onMsg) {
+  const ch = supabase.channel('sm:' + spotId + ':' + Math.random().toString(36).slice(2))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'spot_messages', filter: `spot_id=eq.${spotId}` },
+      (p) => onMsg(p.new))
+    .subscribe();
+  return () => supabase.removeChannel(ch);
+}
+// subir foto del spot a Supabase Storage (bucket "spot-photos")
+export async function uploadSpotPhoto(spotId, file) {
+  const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${spotId}/${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('spot-photos').upload(path, file, { upsert: true });
+  if (upErr) { console.error('uploadSpotPhoto:', upErr.message); throw upErr; }
+  const { data: pub } = supabase.storage.from('spot-photos').getPublicUrl(path);
+  const url = pub.publicUrl;
+  const { error } = await supabase.from('spots').update({ photo_url: url }).eq('id', spotId);
+  if (error) { console.error('setSpotPhoto:', error.message); throw error; }
+  return url;
+}
+
 export function subscribeSpots(group, onChange) {
   const ch = supabase.channel('spots:' + group + ':' + Math.random().toString(36).slice(2))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'spots', filter: `group_code=eq.${group}` }, onChange)
