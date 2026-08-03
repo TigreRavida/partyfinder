@@ -235,21 +235,33 @@ function Row({ k, v, c }) {
   return <div style={S.row}><span style={{ ...S.rowK, color: c || 'var(--ink)' }}>{k}</span><span style={{ ...S.rowV, color: c || 'var(--ink)' }}>{v}</span></div>;
 }
 
-// joystick de simulación (para probar sin caminar)
+// joystick de simulación — movimiento continuo y suave con requestAnimationFrame
 function Joystick() {
-  const holdRef = useRef(null);
-  const start = (dir) => {
-    const D = 6;
-    const move = () => {
-      if (dir === 'up') simMove(D, 0);
-      if (dir === 'down') simMove(-D, 0);
-      if (dir === 'left') simMove(0, D);
-      if (dir === 'right') simMove(0, -D);
-    };
-    move();
-    holdRef.current = setInterval(move, 60);
+  const dirRef = useRef(null);   // dirección activa
+  const rafRef = useRef(null);
+  const lastRef = useRef(0);
+
+  const loop = (t) => {
+    if (!dirRef.current) return;
+    const dt = lastRef.current ? (t - lastRef.current) / 1000 : 0;
+    lastRef.current = t;
+    const SPEED = 8; // metros por segundo (rápido para testear cómodo)
+    const d = SPEED * dt;
+    const dir = dirRef.current;
+    if (dir === 'up') simMove(d, 0);
+    if (dir === 'down') simMove(-d, 0);
+    if (dir === 'left') simMove(0, d);
+    if (dir === 'right') simMove(0, -d);
+    rafRef.current = requestAnimationFrame(loop);
   };
-  const stop = () => { if (holdRef.current) { clearInterval(holdRef.current); holdRef.current = null; } };
+  const start = (dir) => {
+    dirRef.current = dir;
+    lastRef.current = 0;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(loop);
+  };
+  const stop = () => { dirRef.current = null; cancelAnimationFrame(rafRef.current); };
+
   const btn = (dir, arrow, area) => (
     <button style={{ ...S.joyBtn, gridArea: area }}
       onPointerDown={(e) => { e.preventDefault(); start(dir); }}
@@ -272,11 +284,11 @@ function Joystick() {
 const S = {
   root: { position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' },
   stage: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', overflow: 'hidden' },
-  person: { position: 'absolute', transform: 'translate(-50%,-50%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', padding: 0, whiteSpace: 'nowrap' },
+  person: { position: 'absolute', transform: 'translate(-50%,-50%)', transformOrigin: 'center', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 3, background: 'none', padding: 0, whiteSpace: 'nowrap' },
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
-  top: { position: 'absolute', top: 0, bottom: 0, right: 6, width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 20, zIndex: 10, pointerEvents: 'none' },
+  top: { position: 'absolute', top: 0, bottom: 0, left: 6, width: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 20, zIndex: 10, pointerEvents: 'none' },
   pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '7px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', transform: 'rotate(90deg)', whiteSpace: 'nowrap', pointerEvents: 'auto' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
