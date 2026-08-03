@@ -179,9 +179,12 @@ export default function Mapa() {
       {/* barra superior */}
       <div style={S.top}>
         <button style={S.pill} onClick={() => nav('/spots')}>‹ SALIR</button>
-        <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
-          {VENUE.name.toUpperCase()} · {active} ● {showMon ? '▲' : '▼'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
+            {VENUE.name.toUpperCase()} · {active} ● {showMon ? '▲' : '▼'}
+          </button>
+          <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅</button>
+        </div>
       </div>
 
       {showMon && (
@@ -278,6 +281,7 @@ const S = {
   top: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 12px)', left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 10 },
   pill: { background: 'rgba(8,6,10,0.85)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 15px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
+  pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' },
   rowK: { fontSize: 12, fontWeight: 900, letterSpacing: 0.5 }, rowV: { fontSize: 16, fontWeight: 900 },

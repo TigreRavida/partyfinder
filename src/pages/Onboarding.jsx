@@ -14,7 +14,7 @@ export default function Onboarding() {
   const go = () => {
     if (!ready) return;
     saveSession({ name: name.trim(), group: group.trim().toUpperCase() });
-    nav('/spots');
+    nav('/menu');
   };
 
   return (

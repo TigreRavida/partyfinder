@@ -59,6 +59,18 @@ export async function setMyStatus(group, member, status) {
   await supabase.from('presence').update({ status: status.trim() || null, updated_at: new Date().toISOString() })
     .eq('group_code', group).eq('member', member);
 }
+// subir avatar del usuario (reusa el bucket spot-photos, carpeta avatars/)
+export async function uploadAvatar(group, member, file) {
+  const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase();
+  const path = `avatars/${group}_${member}_${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('spot-photos').upload(path, file, { upsert: true });
+  if (upErr) { console.error('uploadAvatar:', upErr.message); throw upErr; }
+  const { data: pub } = supabase.storage.from('spot-photos').getPublicUrl(path);
+  const url = pub.publicUrl;
+  await setMyAvatar(group, member, url);
+  return url;
+}
+
 export async function setMyAvatar(group, member, avatar_url) {
   await supabase.from('presence').update({ avatar_url, updated_at: new Date().toISOString() })
     .eq('group_code', group).eq('member', member);

@@ -65,7 +65,6 @@ export default function Spots() {
           <span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <MapButton />
-            <button style={S.gear} onClick={() => nav('/miembros')}>⚙</button>
           </div>
         </div>
         <div style={S.kicker}>SPOTS</div>

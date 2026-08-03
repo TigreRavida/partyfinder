@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadSession, fetchPresence, fetchConvUnread, subscribeConversation } from '../lib/db';
 import { TabBar } from '../components/TabBar';
-import { MapButton } from '../components/MapButton';
+
 import { Avatar } from '../components/Avatar';
 
 export default function Chat() {
@@ -41,7 +41,7 @@ export default function Chat() {
       <div style={S.head}>
         <div style={S.brandRow}>
           <span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span>
-          <MapButton />
+          <button style={S.gear} onClick={() => nav('/miembros')}>⚙</button>
         </div>
         <div style={S.kicker}>CHAT</div>
         <div style={S.laser} />
@@ -82,6 +82,7 @@ const S = {
   root: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
   head: { padding: '16px 20px 0', flexShrink: 0 },
   brandRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  gear: { fontSize: 22, color: 'var(--ink)', background: 'none' },
   kicker: { color: 'var(--ink-dim)', fontSize: 12, fontWeight: 900, letterSpacing: 4, marginTop: 14 },
   laser: { height: 2, background: 'var(--cyan)', borderRadius: 1, marginTop: 8, marginBottom: 16, boxShadow: '0 0 10px var(--cyan)' },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 16px 16px' },

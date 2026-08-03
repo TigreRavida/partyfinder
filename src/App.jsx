@@ -6,6 +6,8 @@ import Conv from './pages/Conv';
 import Mapa from './pages/Mapa';
 import Miembros from './pages/Miembros';
 import Spot from './pages/Spot';
+import Menu from './pages/Menu';
+import Timetable from './pages/Timetable';
 import { loadSession } from './lib/db';
 
 function Frame({ children }) {
@@ -13,7 +15,7 @@ function Frame({ children }) {
 }
 
 function Home() {
-  return loadSession() ? <Spots /> : <Onboarding />;
+  return loadSession() ? <Menu /> : <Onboarding />;
 }
 
 export default function App() {
@@ -28,6 +30,8 @@ export default function App() {
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/miembros" element={<Miembros />} />
           <Route path="/spot/:id" element={<Spot />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/lineup" element={<Timetable />} />
         </Routes>
       </Frame>
     </BrowserRouter>

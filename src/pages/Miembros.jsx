@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadSession, clearSession, fetchPresence, seedTestMembers, clearTestMembers } from '../lib/db';
+import { loadSession, clearSession, fetchPresence, seedTestMembers, clearTestMembers, uploadAvatar } from '../lib/db';
+import { useRef } from 'react';
 import { VENUE, stageAt, insideVenue } from '../lib/venue';
 import { Avatar } from '../components/Avatar';
 
@@ -11,7 +12,18 @@ export default function Miembros() {
   const session = loadSession();
   const [rows, setRows] = useState([]);
 
-  const refresh = () => fetchPresence(session.group).then(setRows).catch(() => {});
+  const fileRef = useRef(null);
+  const [myAvatar, setMyAvatar] = useState(null);
+  const refresh = () => fetchPresence(session.group).then((r) => {
+    setRows(r);
+    const me = r.find((x) => x.member === session.name);
+    if (me?.avatar_url) setMyAvatar(me.avatar_url);
+  }).catch(() => {});
+  const changeAvatar = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    try { const url = await uploadAvatar(session.group, session.name, file); setMyAvatar(url); refresh(); }
+    catch (err) { alert('No se pudo subir: ' + err.message); }
+  };
   useEffect(() => {
     if (!session) { nav('/'); return; }
     refresh();
@@ -84,6 +96,19 @@ export default function Miembros() {
       </div>
 
       <div style={{ padding: '0 16px' }}>
+        {/* mi avatar */}
+        <div style={S.meBox}>
+          <div onClick={() => fileRef.current?.click()} style={{ position: 'relative', cursor: 'pointer' }}>
+            <Avatar name={session?.name} uri={myAvatar} size={64} />
+            <div style={S.editBadge}>✎</div>
+          </div>
+          <div style={{ marginLeft: 14 }}>
+            <div className="neon-text" style={{ '--nc': 'var(--cyan)', fontSize: 18, fontWeight: 900 }}>{session?.name}</div>
+            <div style={{ color: 'var(--ink-dim)', fontSize: 12 }}>Tocá tu foto para cambiarla</div>
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" onChange={changeAvatar} style={{ display: 'none' }} />
+        </div>
+
         {/* resumen */}
         <div style={S.summary}>
           <div style={S.sumItem}><div className="neon-text" style={{ '--nc': 'var(--cyan)', ...S.sumN }}>{total}</div><div style={S.sumL}>EN LA APP</div></div>
@@ -144,6 +169,8 @@ const S = {
   root: { flex: 1, overflowY: 'auto', paddingBottom: 40 },
   head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 16px) 16px 16px' },
   back: { color: 'var(--ink-dim)', fontSize: 14, fontWeight: 900, fontFamily: 'inherit' },
+  meBox: { display: 'flex', alignItems: 'center', background: 'rgba(53,231,225,0.06)', border: '1px solid var(--cyan)', borderRadius: 16, padding: 14, marginBottom: 18, boxShadow: '0 0 10px rgba(53,231,225,0.2)' },
+  editBadge: { position: 'absolute', right: -2, bottom: -2, width: 22, height: 22, borderRadius: 11, background: 'var(--cyan)', color: '#04231F', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg)' },
   summary: { display: 'flex', gap: 10, marginBottom: 22 },
   sumItem: { flex: 1, background: 'rgba(8,6,10,0.5)', border: '1px solid var(--card-border)', borderRadius: 14, padding: '14px 8px', textAlign: 'center' },
   sumN: { fontSize: 26, fontWeight: 900 },
