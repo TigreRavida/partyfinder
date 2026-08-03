@@ -27,20 +27,19 @@ export default function Conv() {
       }).catch(() => {});
     }
     return subscribeConversation(session.group, (m) => {
-      if (isGroup && m.kind === 'group') {
-        setMsgs((c) => {
-          if (c.some((x) => x.id === m.id)) return c;
-          // reemplazar el optimista (mismo autor+body, id temporal) si existe
-          const i = c.findIndex((x) => String(x.id).startsWith('tmp_') && x.author === m.author && x.body === m.body);
-          if (i >= 0) { const copy = [...c]; copy[i] = m; return copy; }
-          return [...c, m];
-        });
-        markConvSeen('group');
-      }
-      else if (!isGroup && m.kind === 'dm' &&
-        ((m.author === me && m.recipient === to) || (m.author === to && m.recipient === me))) {
-        setMsgs((c) => [...c, m]); markConvSeen('dm', to);
-      }
+      const belongs = (isGroup && m.kind === 'group') ||
+        (!isGroup && m.kind === 'dm' &&
+          ((m.author === me && m.recipient === to) || (m.author === to && m.recipient === me)));
+      if (!belongs) return;
+      setMsgs((c) => {
+        // ya está por id real → no duplicar
+        if (c.some((x) => x.id === m.id)) return c;
+        // reemplazar el optimista (id tmp_, mismo autor+body) si existe
+        const i = c.findIndex((x) => String(x.id).startsWith('tmp_') && x.author === m.author && x.body === m.body);
+        if (i >= 0) { const copy = [...c]; copy[i] = m; return copy; }
+        return [...c, m];
+      });
+      markConvSeen(kind, to);
     });
   }, [kind, to]);
 

@@ -166,7 +166,7 @@ export default function Mapa() {
                   <span style={{ ...S.dot, background: m.mine ? 'var(--amber)' : m.stale ? 'var(--ink-faint)' : 'var(--magenta)',
                     boxShadow: m.stale ? 'none' : `0 0 8px ${m.mine ? '#FFB020' : '#FF3DB8'}` }} />
                   <span style={{ ...S.name, color: m.mine ? 'var(--amber)' : '#fff' }}>
-                    {m.mine ? 'VOS' : m.member}
+                    {m.member}
                   </span>
                   {m.status && <span style={S.pstatus}>{m.status}</span>}
                 </button>
