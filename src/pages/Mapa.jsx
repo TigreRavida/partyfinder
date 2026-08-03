@@ -235,60 +235,68 @@ function Row({ k, v, c }) {
   return <div style={S.row}><span style={{ ...S.rowK, color: c || 'var(--ink)' }}>{k}</span><span style={{ ...S.rowV, color: c || 'var(--ink)' }}>{v}</span></div>;
 }
 
-// joystick de simulación — cada flecha mueve el punto en la dirección que VES
-// en el mapa (el plano está rotado 90°, así que compensamos esa rotación).
+// Joystick ANALÓGICO: arrastrás la palanca desde el centro; la dirección
+// (incluidas diagonales N/S/E/O y combinaciones) y la velocidad salen del vector.
+// Velocidad de caminata real: ~1.5 m/s a fondo.
 function Joystick() {
-  const dirRef = useRef(null);
+  const baseRef = useRef(null);
+  const vecRef = useRef({ x: 0, y: 0 });   // -1..1 en cada eje (lo que se arrastró)
   const rafRef = useRef(null);
   const lastRef = useRef(0);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
 
-  // El plano se dibuja con rotate(90°). Para que el punto se mueva donde el
-  // usuario ve la flecha, mapeamos cada flecha al vector (mx,my) del mundo que,
-  // tras la rotación, apunta en esa dirección en pantalla:
-  //   ▲ arriba en pantalla  → norte del plano
-  //   ▼ abajo               → sur
-  //   ◀ izquierda           → oeste
-  //   ▶ derecha             → este
-  // (mx = este/oeste, my = norte/sur). Con el plano rotado 90° horario:
-  const VECTORS = {
-    up:    { mx: 0,  my: 1 },   // norte
-    down:  { mx: 0,  my: -1 },  // sur
-    left:  { mx: -1, my: 0 },   // oeste
-    right: { mx: 1,  my: 0 },   // este
-  };
+  const MAX = 42;        // radio en px de la palanca
+  const WALK = 1.5;      // m/s a fondo (caminata real)
 
   const loop = (t) => {
-    if (!dirRef.current) return;
     const dt = lastRef.current ? (t - lastRef.current) / 1000 : 0.016;
     lastRef.current = t;
-    const SPEED = 8; // m/s — constante en cualquier dirección
-    const v = VECTORS[dirRef.current];
-    simMove(v.mx * SPEED * dt, v.my * SPEED * dt);
+    const v = vecRef.current;
+    if (v.x !== 0 || v.y !== 0) {
+      // v.x = este(+)/oeste(-), v.y = arriba en pantalla. Mapeo a mundo:
+      // arriba en pantalla = norte (my+); derecha = este (mx+)
+      const mx = v.x * WALK * dt;
+      const my = -v.y * WALK * dt;   // y de pantalla crece hacia abajo → invertir
+      simMove(mx, my);
+    }
     rafRef.current = requestAnimationFrame(loop);
   };
-  const start = (dir) => {
-    dirRef.current = dir;
+
+  const onMove = (e) => {
+    const base = baseRef.current;
+    if (!base) return;
+    const r = base.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist > MAX) { dx = dx / dist * MAX; dy = dy / dist * MAX; }
+    setKnob({ x: dx, y: dy });
+    vecRef.current = { x: dx / MAX, y: dy / MAX };  // normalizado -1..1
+  };
+  const start = (e) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     lastRef.current = 0;
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
+    onMove(e);
   };
-  const stop = () => { dirRef.current = null; cancelAnimationFrame(rafRef.current); };
+  const end = () => {
+    vecRef.current = { x: 0, y: 0 };
+    setKnob({ x: 0, y: 0 });
+    cancelAnimationFrame(rafRef.current);
+  };
 
-  const btn = (dir, arrow, area) => (
-    <button style={{ ...S.joyBtn, gridArea: area }}
-      onPointerDown={(e) => { e.preventDefault(); start(dir); }}
-      onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}>{arrow}</button>
-  );
   return (
     <div style={S.joyWrap}>
-      <div style={S.joyGrid}>
-        {btn('up', '▲', 'up')}
-        {btn('left', '◀', 'left')}
-        <div style={{ gridArea: 'mid' }} />
-        {btn('right', '▶', 'right')}
-        {btn('down', '▼', 'down')}
+      <div ref={baseRef} style={S.joyBase}
+        onPointerDown={(e) => { e.preventDefault(); start(e); }}
+        onPointerMove={(e) => { if (vecRef.current || knob.x || knob.y) onMove(e); }}
+        onPointerUp={end} onPointerCancel={end} onPointerLeave={end}>
+        <div style={{ ...S.joyKnob, transform: `translate(${knob.x}px, ${knob.y}px)` }} />
       </div>
-      <span style={S.joyLabel}>SIM · mantené apretado</span>
+      <span style={S.joyLabel}>SIM · arrastrá</span>
     </div>
   );
 }
@@ -312,9 +320,9 @@ const S = {
   stageK: { color: 'var(--ink-dim)', fontSize: 12.5, fontWeight: 700, letterSpacing: 1 },
   stageV: { color: 'var(--magenta)', fontSize: 13, fontWeight: 900 },
   battBar: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 16px)', left: 16, right: 16, background: 'rgba(20,5,12,0.92)', border: '1px solid var(--bad)', borderRadius: 12, padding: 12, color: 'var(--bad)', fontSize: 12.5, fontWeight: 900, textAlign: 'center', zIndex: 9 },
-  joyWrap: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 20px)', right: 20, alignItems: 'center', textAlign: 'center', zIndex: 12 },
-  joyGrid: { display: 'grid', gridTemplateAreas: '". up ." "left mid right" ". down ."', gridTemplateColumns: '36px 36px 36px', gridTemplateRows: '36px 36px 36px', gap: 3 },
-  joyBtn: { width: 36, height: 36, borderRadius: 10, background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--cyan)', color: 'var(--cyan)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', userSelect: 'none', boxShadow: '0 0 6px rgba(53,231,225,0.4)' },
+  joyWrap: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 20px)', right: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, zIndex: 12 },
+  joyBase: { width: 108, height: 108, borderRadius: 54, background: 'rgba(8,6,10,0.55)', border: '2px solid var(--cyan)', boxShadow: '0 0 14px rgba(53,231,225,0.4), inset 0 0 20px rgba(53,231,225,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', userSelect: 'none' },
+  joyKnob: { width: 44, height: 44, borderRadius: 22, background: 'radial-gradient(circle at 35% 30%, #7ff6f2, var(--cyan))', boxShadow: '0 0 12px rgba(53,231,225,0.9)', pointerEvents: 'none' },
   joyLabel: { color: 'var(--cyan)', fontSize: 10, fontWeight: 900, letterSpacing: 2 },
   modalWrap: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 30 },
   modal: { background: 'var(--bg-elev)', border: '1px solid var(--card-border)', borderRadius: 20, padding: 22, width: '100%', maxWidth: 380 },
