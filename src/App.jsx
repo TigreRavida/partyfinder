@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Onboarding from './pages/Onboarding';
 import Spots from './pages/Spots';
@@ -7,6 +8,7 @@ import Mapa from './pages/Mapa';
 import Miembros from './pages/Miembros';
 import Spot from './pages/Spot';
 import Menu from './pages/Menu';
+import Splash from './pages/Splash';
 import Timetable from './pages/Timetable';
 import Perfil from './pages/Perfil';
 import { loadSession } from './lib/db';
@@ -20,6 +22,13 @@ function Home() {
 }
 
 export default function App() {
+  const [booting, setBooting] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setBooting(false), 1600); return () => clearTimeout(t); }, []);
+  if (booting) return <div className="phone-frame"><Splash /></div>;
+  return <AppRoutes />;
+}
+
+function AppRoutes() {
   return (
     <BrowserRouter>
       <Frame>

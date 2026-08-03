@@ -67,15 +67,21 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   color: #fff;
   text-shadow: 0 0 4px #fff, 0 0 10px var(--nc, var(--cyan)), 0 0 22px var(--nc, var(--cyan));
 }
-.neon-tube {  /* el título tipo letrero: relleno claro + halo grande */
-  color: #EAF6FF;
+.neon-tube {  /* el título tipo letrero NEMO: relleno claro + triple contorno cian→naranja */
+  color: #EAFBFF;
   text-shadow:
-    0 0 3px #fff,
-    0 0 8px var(--nc, var(--cyan)),
-    0 0 18px var(--nc, var(--cyan)),
-    0 0 38px color-mix(in srgb, var(--nc, var(--cyan)) 70%, transparent);
+    0 0 1px #EAFBFF,
+    0 0 2px #B6FBF8,
+    -1px -1px 0 var(--nc, #35E7E1),
+    1px 1px 0 var(--nc, #35E7E1),
+    0 0 6px var(--nc, #35E7E1),
+    0 0 11px #FF6B2C,
+    0 0 22px #FF6B2C,
+    0 0 38px rgba(255,107,44,0.55);
   letter-spacing: 2px;
 }
 /* pulso sutil de neón encendido */
 @keyframes flicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.82} 94%{opacity:1} }
 .neon-tube, .neon-box { animation: flicker 6s infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
