@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadSession, clearSession, fetchPresence, seedTestMembers, clearTestMembers, uploadAvatar } from '../lib/db';
+import { loadSession, clearSession, fetchPresence, uploadAvatar } from '../lib/db';
 import { useRef } from 'react';
 import { VENUE, stageAt, insideVenue } from '../lib/venue';
 import { Avatar } from '../components/Avatar';
@@ -59,8 +59,6 @@ export default function Miembros() {
     else { navigator.clipboard.writeText(url); alert('Link copiado: ' + url); }
   };
   const leave = () => { if (confirm('¿Salir del grupo?')) { clearSession(); nav('/'); } };
-  const seed = async () => { try { const n = await seedTestMembers(session.group); alert(n + ' de prueba agregados'); refresh(); } catch (e) { alert('Error: ' + e.message); } };
-  const unseed = async () => { await clearTestMembers(session.group); refresh(); };
 
   const Person = ({ m, color }) => (
     <div className="neon-box" style={{ '--nc': color, ...S.row }}>
@@ -155,11 +153,6 @@ export default function Miembros() {
         <span className="neon-text" style={{ '--nc': 'var(--magenta)' }}>INVITAR GENTE</span>
       </button>
 
-      <div style={S.testWrap}>
-        <div style={S.testLabel}>MODO PRUEBA</div>
-        <button style={S.testBtn} onClick={seed}>+ Agregar 8 integrantes de prueba</button>
-        <button style={{ ...S.testBtn, color: 'var(--ink-dim)', marginTop: 8 }} onClick={unseed}>Quitar integrantes de prueba</button>
-      </div>
       <button style={S.leave} onClick={leave}>salir del grupo</button>
     </div>
   );
@@ -183,9 +176,6 @@ const S = {
   status: { color: 'var(--cyan)', fontSize: 13.5, fontStyle: 'italic', marginTop: 3 },
   batt: { fontSize: 13, fontWeight: 900 },
   invite: { display: 'block', margin: '10px 16px 0', width: 'calc(100% - 32px)', padding: 18, fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff' },
-  testWrap: { margin: '20px 16px 0', padding: 14, border: '1px dashed var(--card-border)', borderRadius: 12 },
-  testLabel: { color: 'var(--ink-faint)', fontSize: 11, fontWeight: 900, letterSpacing: 1, marginBottom: 10 },
-  testBtn: { display: 'block', width: '100%', background: 'rgba(8,6,10,0.5)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, color: 'var(--cyan)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit' },
   leave: { display: 'block', margin: '16px auto', color: 'var(--ink-dim)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', background: 'none' },
   empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', textAlign: 'center', marginTop: 30 },
 };

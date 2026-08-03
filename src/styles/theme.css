@@ -24,10 +24,11 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: #050406; overscroll-behavior: none; overflow: hidden; }
 #root { height: 100%; display: flex; justify-content: center; align-items: stretch; background: #050406; }
-body, button, input, textarea {
+body, button, input, textarea, p, h1, h2, h3, h4, h5, h6, span, div, a, label {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+p, h1, h2, h3, h4, h5, h6 { margin: 0; }
 button { cursor: pointer; border: none; background: none; color: inherit; }
 
 /* ---- marco tipo teléfono con FONDO DE LADRILLO ---- */

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadSession, fetchConversation, sendGroupMessage, subscribeConversation, markConvSeen } from '../lib/db';
+import { loadSession, fetchConversation, sendGroupMessage, subscribeConversation, markConvSeen, fetchPresence } from '../lib/db';
 import { Avatar } from '../components/Avatar';
 
 export default function Conv() {
@@ -11,6 +11,7 @@ export default function Conv() {
   const to = params.get('to') || undefined;
   const isGroup = kind === 'group';
   const [msgs, setMsgs] = useState([]);
+  const [toAvatar, setToAvatar] = useState(null);
   const [draft, setDraft] = useState('');
   const endRef = useRef(null);
 
@@ -19,8 +20,23 @@ export default function Conv() {
     const me = session.name;
     fetchConversation(session.group, kind, me, to).then(setMsgs).catch(() => {});
     markConvSeen(kind, to);
+    if (!isGroup && to) {
+      fetchPresence(session.group).then((r) => {
+        const p = r.find((x) => x.member === to);
+        if (p?.avatar_url) setToAvatar(p.avatar_url);
+      }).catch(() => {});
+    }
     return subscribeConversation(session.group, (m) => {
-      if (isGroup && m.kind === 'group') { setMsgs((c) => c.some((x) => x.id === m.id) ? c : [...c, m]); markConvSeen('group'); }
+      if (isGroup && m.kind === 'group') {
+        setMsgs((c) => {
+          if (c.some((x) => x.id === m.id)) return c;
+          // reemplazar el optimista (mismo autor+body, id temporal) si existe
+          const i = c.findIndex((x) => String(x.id).startsWith('tmp_') && x.author === m.author && x.body === m.body);
+          if (i >= 0) { const copy = [...c]; copy[i] = m; return copy; }
+          return [...c, m];
+        });
+        markConvSeen('group');
+      }
       else if (!isGroup && m.kind === 'dm' &&
         ((m.author === me && m.recipient === to) || (m.author === to && m.recipient === me))) {
         setMsgs((c) => [...c, m]); markConvSeen('dm', to);
@@ -43,7 +59,7 @@ export default function Conv() {
     <div style={S.root}>
       <div style={S.head}>
         <button style={S.back} onClick={() => nav('/chat')}>‹</button>
-        {!isGroup && to && <Avatar name={to} size={34} />}
+        {!isGroup && to && <Avatar name={to} uri={toAvatar} size={34} />}
         <div className="neon-text" style={{ '--nc': isGroup ? 'var(--gold)' : 'var(--cyan)', ...S.title }}>{isGroup ? `Grupo · ${session?.group}` : to}</div>
       </div>
       <div style={S.msgs}>

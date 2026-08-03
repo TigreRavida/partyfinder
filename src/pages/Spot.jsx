@@ -24,7 +24,12 @@ export default function Spot() {
     fetchSpot(id).then(setSpot).catch(() => {});
     fetchSpotMessages(id).then(setMsgs).catch(() => {});
     return subscribeSpotMessages(id, (m) => {
-      setMsgs((c) => c.some((x) => x.id === m.id) ? c : [...c, m]);
+      setMsgs((c) => {
+        if (c.some((x) => x.id === m.id)) return c;
+        const i = c.findIndex((x) => String(x.id).startsWith('tmp_') && x.author === m.author && x.body === m.body);
+        if (i >= 0) { const copy = [...c]; copy[i] = m; return copy; }
+        return [...c, m];
+      });
     });
   }, [id]);
 
