@@ -51,10 +51,10 @@ const S = {
   head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 16px) 16px 16px' },
   back: { color: 'var(--ink-dim)', fontSize: 14, fontWeight: 900 },
   title: { fontSize: 18, fontWeight: 900 },
-  row: { display: 'flex', alignItems: 'center', gap: 12, background: 'var(--card)', border: '1px solid var(--card-border)', borderRadius: 16, padding: 14, marginBottom: 10 },
+  row: { display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(16,13,20,0.6)', border: '1px solid var(--violet)', borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: '0 0 8px rgba(176,107,255,0.2)' },
   name: { fontSize: 16, fontWeight: 900 },
   status: { color: 'var(--cyan)', fontSize: 14, fontStyle: 'italic', marginTop: 4 },
-  invite: { display: 'block', margin: '20px 16px 0', width: 'calc(100% - 32px)', background: 'var(--magenta)', color: '#fff', borderRadius: 16, padding: 18, fontSize: 15, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 22px rgba(255,61,184,0.6)' },
+  invite: { display: 'block', margin: '20px 16px 0', width: 'calc(100% - 32px)', background: 'rgba(255,61,184,0.15)', border: '2px solid var(--magenta)', color: 'var(--magenta)', borderRadius: 16, padding: 18, fontSize: 15, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 20px rgba(255,61,184,0.5)' },
   testBtn: { display: 'block', width: '100%', background: 'var(--bg-elev)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, color: 'var(--cyan)', fontSize: 13, fontWeight: 700 },
   leave: { display: 'block', margin: '16px auto', color: 'var(--ink-dim)', fontSize: 13, fontWeight: 700 },
 };

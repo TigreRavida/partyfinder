@@ -19,44 +19,34 @@ export default function Onboarding() {
 
   return (
     <div style={S.root}>
-      <Logo size={150} />
-      <div style={S.wordmark}><span style={{ color: 'var(--cyan)' }}>Party</span><span style={{ color: 'var(--magenta)' }}>Finder</span></div>
+      <div style={{ marginBottom: 48 }}><Logo size={120} /></div>
 
       {preset && (
-        <div style={S.invite}>
+        <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.invite }}>
           <div style={S.inviteK}>TE INVITARON AL GRUPO</div>
-          <div style={S.inviteG}>{group}</div>
+          <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.inviteG }}>{group}</div>
         </div>
       )}
 
-      <div style={S.field}>
-        <label style={{ ...S.label, color: 'var(--cyan)' }}>TU NOMBRE</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Cómo te dicen"
-          style={{ ...S.input, borderColor: 'var(--cyan)' }} />
-      </div>
-      <div style={S.field}>
-        <label style={{ ...S.label, color: 'var(--magenta)' }}>{preset ? 'CÓDIGO (YA CARGADO)' : 'GRUPO A PERTENECER'}</label>
-        <input value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="Ej: LOVELAND"
-          disabled={!!preset} style={{ ...S.input, borderColor: 'var(--magenta)' }}
-          onKeyDown={(e) => e.key === 'Enter' && go()} />
-      </div>
+      <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
+        value={name} onChange={(e) => setName(e.target.value)} placeholder="NICK" />
+      <input className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.input }}
+        value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="GRUPO"
+        disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()} />
 
-      <button onClick={go} disabled={!ready}
-        style={{ ...S.continue, opacity: ready ? 1 : 0.4, boxShadow: ready ? '0 0 20px rgba(53,231,225,0.7)' : 'none' }}>
-        CONTINUAR
+      <button className={ready ? 'neon-box' : ''} onClick={go} disabled={!ready}
+        style={{ '--nc': 'var(--green)', ...S.continue, opacity: ready ? 1 : 0.35 }}>
+        <span className={ready ? 'neon-text' : ''} style={{ '--nc': 'var(--green)' }}>ENTRAR</span>
       </button>
     </div>
   );
 }
 
 const S = {
-  root: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', overflowY: 'auto' },
-  wordmark: { fontSize: 22, fontWeight: 900, letterSpacing: 0.5, marginTop: 14, marginBottom: 40 },
-  field: { alignSelf: 'stretch', marginBottom: 24 },
-  label: { display: 'block', fontSize: 14, fontWeight: 900, letterSpacing: 2, textAlign: 'center', marginBottom: 12 },
-  input: { width: '100%', background: 'rgba(53,231,225,0.04)', border: '2px solid', borderRadius: 14, padding: 16, color: 'var(--ink)', fontSize: 17, fontWeight: 600, textAlign: 'center', outline: 'none' },
-  continue: { width: 150, height: 150, borderRadius: 75, border: '2.5px solid var(--cyan)', background: 'rgba(53,231,225,0.05)', color: 'var(--cyan)', fontSize: 17, fontWeight: 900, letterSpacing: 1.5, marginTop: 20 },
-  invite: { alignSelf: 'stretch', background: 'rgba(53,231,225,0.06)', border: '1.5px solid var(--cyan)', borderRadius: 16, padding: 18, marginBottom: 28, textAlign: 'center' },
-  inviteK: { color: 'var(--cyan)', fontSize: 11, fontWeight: 900, letterSpacing: 2 },
-  inviteG: { color: 'var(--ink)', fontSize: 30, fontWeight: 900 },
+  root: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px', overflowY: 'auto' },
+  input: { width: '100%', padding: '18px 20px', color: 'var(--ink)', fontSize: 20, fontWeight: 800, textAlign: 'center', letterSpacing: 2, marginBottom: 18, outline: 'none', background: 'rgba(8,6,10,0.5)' },
+  continue: { width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, letterSpacing: 3, marginTop: 14, color: '#fff' },
+  invite: { width: '100%', padding: 16, marginBottom: 24, textAlign: 'center' },
+  inviteK: { color: 'var(--gold)', fontSize: 11, fontWeight: 900, letterSpacing: 2 },
+  inviteG: { fontSize: 30, fontWeight: 900, marginTop: 4 },
 };

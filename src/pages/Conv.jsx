@@ -41,7 +41,7 @@ export default function Conv() {
       <div style={S.head}>
         <button style={S.back} onClick={() => nav('/chat')}>‹</button>
         {!isGroup && to && <Avatar name={to} size={34} />}
-        <div style={S.title}>{isGroup ? `Grupo · ${session?.group}` : to}</div>
+        <div className="neon-text" style={{ '--nc': isGroup ? 'var(--gold)' : 'var(--cyan)', ...S.title }}>{isGroup ? `Grupo · ${session?.group}` : to}</div>
       </div>
       <div style={S.msgs}>
         {msgs.map((m) => {
@@ -50,7 +50,7 @@ export default function Conv() {
             <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
               <div style={{ ...S.bubble, ...(mine ? S.mine : S.theirs) }}>
                 {!mine && isGroup && <div style={S.author}>{m.author}</div>}
-                <div style={{ color: mine ? '#04231F' : 'var(--ink)' }}>{m.body}</div>
+                <div style={{ color: 'var(--ink)' }}>{m.body}</div>
               </div>
             </div>
           );
@@ -68,16 +68,16 @@ export default function Conv() {
 }
 const S = {
   root: { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' },
-  head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 12px) 16px 12px', borderBottom: '1px solid var(--line)' },
+  head: { display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 12px) 16px 12px', borderBottom: '1px solid rgba(176,107,255,0.3)', background: 'rgba(8,6,10,0.7)' },
   back: { width: 34, height: 34, borderRadius: 17, background: 'var(--bg-elev)', border: '1px solid var(--card-border)', color: 'var(--ink)', fontSize: 22, fontWeight: 900 },
   title: { fontSize: 19, fontWeight: 900, flex: 1 },
   msgs: { flex: 1, overflowY: 'auto', padding: 16 },
   bubble: { maxWidth: '78%', borderRadius: 16, padding: '9px 13px' },
-  mine: { background: 'var(--cyan)', borderBottomRightRadius: 4 },
-  theirs: { background: 'var(--card)', border: '1px solid var(--card-border)', borderBottomLeftRadius: 4 },
+  mine: { background: 'rgba(53,231,225,0.16)', border: '1px solid var(--cyan)', boxShadow: '0 0 8px rgba(53,231,225,0.3)', borderBottomRightRadius: 4 },
+  theirs: { background: 'rgba(176,107,255,0.12)', border: '1px solid var(--violet)', boxShadow: '0 0 8px rgba(176,107,255,0.25)', borderBottomLeftRadius: 4 },
   author: { color: 'var(--magenta)', fontSize: 11, fontWeight: 900, marginBottom: 2 },
   empty: { color: 'var(--ink-dim)', fontSize: 14, textAlign: 'center', marginTop: 50 },
-  inputBar: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px calc(env(safe-area-inset-bottom) + 10px)', borderTop: '1px solid var(--line)', background: 'var(--bg-elev)' },
+  inputBar: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px calc(env(safe-area-inset-bottom) + 10px)', borderTop: '1px solid rgba(176,107,255,0.3)', background: 'rgba(8,6,10,0.8)' },
   input: { flex: 1, background: 'var(--card)', border: '1.5px solid var(--card-border)', borderRadius: 20, padding: '10px 15px', color: 'var(--ink)', fontSize: 15, outline: 'none' },
-  send: { width: 44, height: 44, borderRadius: 22, background: 'var(--cyan)', color: '#04231F', fontSize: 18, fontWeight: 900, boxShadow: '0 0 12px rgba(53,231,225,0.5)', flexShrink: 0 },
+  send: { width: 44, height: 44, borderRadius: 22, background: 'rgba(53,231,225,0.18)', border: '1.5px solid var(--cyan)', color: 'var(--cyan)', fontSize: 18, fontWeight: 900, boxShadow: '0 0 12px rgba(53,231,225,0.5)', flexShrink: 0 },
 };
