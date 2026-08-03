@@ -88,7 +88,7 @@ export default function Mapa() {
     return { byStage, inside, outside };
   }, [members]);
 
-  const active = members.filter((m) => !m.stale).length;
+  const active = members.filter((m) => m.lat != null).length;
   const lowBatt = members.filter((m) => !m.stale && m.battery != null && m.battery <= 20);
 
   const saveStatus = async () => {
@@ -236,24 +236,34 @@ function Row({ k, v, c }) {
 
 // joystick de simulación (para probar sin caminar)
 function Joystick() {
-  // el plano se rota 90°: mapeo verificado — arriba=este(mx+), izq=norte(my+)
-  const press = (dir) => {
-    const D = 15;
-    if (dir === 'up')    simMove(D, 0);
-    if (dir === 'down')  simMove(-D, 0);
-    if (dir === 'left')  simMove(0, D);
-    if (dir === 'right') simMove(0, -D);
+  const holdRef = useRef(null);
+  const start = (dir) => {
+    const D = 6;
+    const move = () => {
+      if (dir === 'up') simMove(D, 0);
+      if (dir === 'down') simMove(-D, 0);
+      if (dir === 'left') simMove(0, D);
+      if (dir === 'right') simMove(0, -D);
+    };
+    move();
+    holdRef.current = setInterval(move, 60);
   };
+  const stop = () => { if (holdRef.current) { clearInterval(holdRef.current); holdRef.current = null; } };
+  const btn = (dir, arrow, area) => (
+    <button style={{ ...S.joyBtn, gridArea: area }}
+      onPointerDown={(e) => { e.preventDefault(); start(dir); }}
+      onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}>{arrow}</button>
+  );
   return (
     <div style={S.joyWrap}>
       <div style={S.joyGrid}>
-        <button style={{ ...S.joyBtn, gridArea: 'up' }} onPointerDown={() => press('up')}>▲</button>
-        <button style={{ ...S.joyBtn, gridArea: 'left' }} onPointerDown={() => press('left')}>◀</button>
+        {btn('up', '▲', 'up')}
+        {btn('left', '◀', 'left')}
         <div style={{ gridArea: 'mid' }} />
-        <button style={{ ...S.joyBtn, gridArea: 'right' }} onPointerDown={() => press('right')}>▶</button>
-        <button style={{ ...S.joyBtn, gridArea: 'down' }} onPointerDown={() => press('down')}>▼</button>
+        {btn('right', '▶', 'right')}
+        {btn('down', '▼', 'down')}
       </div>
-      <span style={S.joyLabel}>SIM · movete</span>
+      <span style={S.joyLabel}>SIM · mantené apretado</span>
     </div>
   );
 }
@@ -265,7 +275,7 @@ const S = {
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
-  top: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 10 },
+  top: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 12px)', left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 10 },
   pill: { background: 'rgba(8,6,10,0.85)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 15px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },

@@ -34,8 +34,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 .phone-frame {
   width: 100%;
   max-width: 430px;
-  min-height: 100vh;
-  height: 100dvh;
+  height: 100dvh;              /* dvh = viewport dinámico, descuenta barras del sistema */
   position: relative;
   overflow: hidden;
   display: flex;

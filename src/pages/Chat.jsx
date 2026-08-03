@@ -38,6 +38,7 @@ export default function Chat() {
 
   return (
     <div style={S.root}>
+      <div style={S.scroll}>
       <div style={S.head}>
         <div style={S.brandRow}>
           <span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span>
@@ -74,12 +75,14 @@ export default function Chat() {
         })}
         {others.length === 0 && <p style={S.empty}>Todavía no hay nadie más. Invitá gente desde ⚙.</p>}
       </div>
+      </div>
       <TabBar active="chat" />
     </div>
   );
 }
 const S = {
-  root: { flex: 1, overflowY: 'auto', paddingBottom: 90 },
+  root: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
+  scroll: { flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 16 },
   head: { padding: '16px 20px 0' },
   brandRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   kicker: { color: 'var(--ink-dim)', fontSize: 12, fontWeight: 900, letterSpacing: 4, marginTop: 14 },
