@@ -24,6 +24,10 @@ function Home() {
 export default function App() {
   const [booting, setBooting] = useState(true);
   useEffect(() => { const t = setTimeout(() => setBooting(false), 1600); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    // bloqueo de giro global: la app está pensada para usarse SIN girar nunca
+    try { screen.orientation?.lock?.('portrait').catch(() => {}); } catch {}
+  }, []);
   if (booting) return <div className="phone-frame"><Splash /></div>;
   return <AppRoutes />;
 }

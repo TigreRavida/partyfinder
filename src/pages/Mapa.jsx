@@ -4,6 +4,7 @@ import { VENUE, latLonToFrac, stageAt, insideVenue, metersToLatLon } from '../li
 import { loadSession, fetchPresence, subscribePresence, upsertPresence, setMyStatus,
   createSpot, fetchSpots, deleteSpot, renameSpot, subscribeSpots, deviceId } from '../lib/db';
 import { SIM, simXY, simSubscribe, simMove, watchPosition, readBattery } from '../lib/geo';
+import { Avatar } from '../components/Avatar';
 
 const STALE = 15 * 60e3;
 
@@ -25,11 +26,6 @@ export default function Mapa() {
   // medir el contenedor para dimensionar el plano rotado (como en Expo con winH)
   const stageRef = useRef(null);
   const canvasRef = useRef(null);
-  useEffect(() => {
-    // bloquear giro: el mapa ya se ve apaisado por CSS, girar el teléfono lo rompe
-    try { screen.orientation?.lock?.('portrait').catch(() => {}); } catch {}
-    return () => { try { screen.orientation?.unlock?.(); } catch {} };
-  }, []);
   const [box, setBox] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const measure = () => {
@@ -315,8 +311,11 @@ export default function Mapa() {
       {view && (
         <div style={S.modalWrap} onClick={() => setView(null)}>
           <div style={S.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 style={S.modalH}>{view.member}</h3>
-            {view.status ? <p style={S.vstatus}>"{view.status}"</p> : <p style={S.vsub}>Sin estado por ahora.</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <Avatar name={view.member} uri={view.avatar_url} size={40} />
+              <h3 style={{ ...S.modalH, margin: 0 }}>{view.member}</h3>
+            </div>
+            {view.status && <p style={S.vstatus}>"{view.status}"</p>}
             <p style={S.vsub}>{view.ageMs < 90e3 ? 'en evento ahora' : `visto hace ${Math.round(view.ageMs / 60000)} min`}
               {view.battery != null ? ` · ${view.battery}% 🔋` : ''}</p>
             <button className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.msgBtn }}
@@ -325,10 +324,6 @@ export default function Mapa() {
             </button>
           </div>
         </div>
-      )}
-
-      {placing && (
-        <div style={S.placingBanner}>📍 Tocá el mapa para marcar el punto · <span onClick={() => setPlacing(false)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>cancelar</span></div>
       )}
 
       {pinView && (
@@ -431,10 +426,10 @@ const S = {
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
   pillPin: { border: '1.5px solid #FF3B3B', boxShadow: '0 0 10px rgba(255,59,59,0.6)', padding: '8px 12px' },
-  pillPinOn: { background: '#FF3B3B', boxShadow: '0 0 16px rgba(255,59,59,0.9)' },
-  pinMark: { position: 'absolute', transform: 'translate(-50%,-100%) rotate(90deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, background: 'none', padding: 0, whiteSpace: 'nowrap', zIndex: 5 },
+  pillPinOn: { background: '#FF3B3B', boxShadow: '0 0 18px rgba(255,59,59,1)', transform: 'scale(1.18)', borderColor: '#fff' },
+  pinMark: { position: 'absolute', transform: 'translate(-50%,-100%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, background: 'none', padding: 0, whiteSpace: 'nowrap', zIndex: 5 },
   pinIcon: { fontSize: 24, filter: 'drop-shadow(0 0 4px rgba(255,59,59,0.9))' },
-  pinLabel: { fontSize: 11, fontWeight: 900, color: '#fff', background: 'rgba(8,6,10,0.85)', padding: '2px 7px', borderRadius: 8, border: '1px solid #FF3B3B' },
+  pinLabel: { fontSize: 10, fontWeight: 900, color: '#fff', marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   placingBanner: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 58px)', left: 12, right: 12, background: 'rgba(255,59,59,0.95)', color: '#fff', fontSize: 13, fontWeight: 800, padding: '10px 14px', borderRadius: 12, textAlign: 'center', zIndex: 15 },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' },
