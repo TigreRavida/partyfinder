@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TIMETABLE } from '../lib/timetable';
+import { TabBar } from '../components/TabBar';
 
 const STAGE_COLORS = {
   ARENA: 'var(--magenta)', NEST: 'var(--cyan)', RISE: 'var(--green)',
@@ -74,6 +75,7 @@ export default function Timetable() {
         })}
         {sets.length === 0 && <p style={S.empty}>Sin datos para este filtro.</p>}
       </div>
+      <TabBar active="mapa" />
     </div>
   );
 }
