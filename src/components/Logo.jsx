@@ -1,7 +1,7 @@
 // Logo NEMO — pin de ubicación con estrella + wordmark tipo cartel de neón.
 // Referencia: pin naranja, estrella dorada, aro cian; "NEMO" con relleno
 // claro y triple contorno (cian → naranja → glow).
-export function Logo({ size = 130 }) {
+export function Logo({ size = 130, pinOnly = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
       <svg width={size} height={size * 1.15} viewBox="0 0 100 115" fill="none">
@@ -33,7 +33,7 @@ export function Logo({ size = 130 }) {
         <path d="M50 26 L54.5 37 L66 37.5 L57 45 L60 56.5 L50 49.5 L40 56.5 L43 45 L34 37.5 L45.5 37 Z"
           stroke="#FFF0B8" strokeWidth="0.9" fill="none" strokeLinejoin="round" />
       </svg>
-      <Wordmark size={size * 0.42} />
+      {!pinOnly && <Wordmark size={size * 0.42} />}
     </div>
   );
 }

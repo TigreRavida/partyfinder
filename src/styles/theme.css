@@ -67,6 +67,16 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   color: #fff;
   text-shadow: 0 0 4px #fff, 0 0 10px var(--nc, var(--cyan)), 0 0 22px var(--nc, var(--cyan));
 }
+
+.neon-hollow {  /* texto tipo tubo de neón hueco (cian brillante, como la ref del menú) */
+  color: #CFFCFA;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 6px var(--nc, #35E7E1),
+    0 0 12px var(--nc, #35E7E1),
+    0 0 22px var(--nc, #35E7E1);
+}
+
 .neon-tube {  /* NEMO estilo cartel: relleno DORADO + contorno CIAN + halo naranja */
   color: #FFE28C;
   text-shadow:
