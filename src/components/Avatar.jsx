@@ -7,6 +7,9 @@ function hash(str) {
   for (let i = 0; i < (str || '').length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
   return h;
 }
+export function colorForName(name) {
+  return COLORS[hash(name || '?') % COLORS.length];
+}
 export function defaultAvatar(name) {
   return AVATARS[hash(name || '?') % AVATARS.length];
 }

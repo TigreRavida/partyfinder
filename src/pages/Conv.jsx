@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadSession, fetchConversation, sendGroupMessage, subscribeConversation, markConvSeen, fetchPresence } from '../lib/db';
-import { Avatar } from '../components/Avatar';
+import { Avatar, colorForName } from '../components/Avatar';
 
 export default function Conv() {
   const nav = useNavigate();
@@ -64,11 +64,15 @@ export default function Conv() {
       <div style={S.msgs}>
         {msgs.map((m) => {
           const mine = m.author === session?.name;
+          const authorColor = colorForName(m.author);
           const time = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           return (
             <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
-              <div style={{ ...S.bubble, ...(mine ? S.mine : S.theirs) }}>
-                {!mine && isGroup && <div style={S.author}>{m.author}</div>}
+              <div style={{ ...S.bubble, ...(mine ? S.mine : {
+                background: `${authorColor}22`, border: `1px solid ${authorColor}`,
+                boxShadow: `0 0 8px ${authorColor}44`, borderBottomLeftRadius: 4,
+              }) }}>
+                {!mine && isGroup && <div style={{ ...S.author, color: authorColor }}>{m.author}</div>}
                 <div style={{ color: 'var(--ink)' }}>{m.body}</div>
                 {time && <div style={S.time}>{time}</div>}
               </div>
