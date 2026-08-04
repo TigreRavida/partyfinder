@@ -19,6 +19,11 @@ export default function Mapa() {
 
   // medir el contenedor para dimensionar el plano rotado (como en Expo con winH)
   const stageRef = useRef(null);
+  useEffect(() => {
+    // bloquear giro: el mapa ya se ve apaisado por CSS, girar el teléfono lo rompe
+    try { screen.orientation?.lock?.('portrait').catch(() => {}); } catch {}
+    return () => { try { screen.orientation?.unlock?.(); } catch {} };
+  }, []);
   const [box, setBox] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const measure = () => {
@@ -50,7 +55,7 @@ export default function Mapa() {
       await upsertPresence({ group: session.group, member: session.name, lat: ll.lat, lon: ll.lon, accuracy: 8, battery });
     };
     publish();
-    const beat = setInterval(publish, 10000);
+    const beat = setInterval(publish, 4000);  // cada 4s: todos ven lo mismo casi en vivo
     let stopWatch = () => {};
     if (SIM) {
       const un = simSubscribe(() => { const ll = metersToLatLon(simXY().mx, simXY().my); setMyLL(ll); });
@@ -82,11 +87,13 @@ export default function Mapa() {
     const kLat = 110540, kLon = 111320 * Math.cos(52.3677 * Math.PI / 180);
     for (const m of members) {
       if (m.stale || m.lat == null) continue;
-      if (insideVenue(m.lat, m.lon)) inside++; else outside++;
-      // asignar al escenario cuyo polígono la contiene, o al más cercano dentro de 45m
+      const isInside = insideVenue(m.lat, m.lon);
+      if (isInside) inside++; else outside++;
+      // asignar al escenario cuyo polígono la contiene; si no, al más cercano
+      // (hasta 90m = "zona del escenario"). Solo cuenta gente dentro del predio.
       let s = stageAt(m.lat, m.lon);
-      if (!s) {
-        let best = null, bestD = 45;
+      if (!s && isInside) {
+        let best = null, bestD = 90;
         for (const st of VENUE.stages) {
           const d = Math.hypot((m.lat - st.lat) * kLat, (m.lon - st.lon) * kLon);
           if (d < bestD) { bestD = d; best = st.name; }

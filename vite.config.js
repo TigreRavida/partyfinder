@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.png'],
       manifest: {
-        name: 'PartyFinder',
-        short_name: 'PartyFinder',
+        name: 'NEMO',
+        short_name: 'NEMO',
         description: 'Encontrá a tu grupo en la fiesta',
         theme_color: '#0A0E1A',
         background_color: '#0A0E1A',
