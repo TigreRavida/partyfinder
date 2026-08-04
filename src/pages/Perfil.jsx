@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadSession, saveSession, fetchPresence, uploadAvatar, setMyStatus, setMyAvatar } from '../lib/db';
+import { loadSession, saveSession, clearSession, fetchPresence, uploadAvatar, setMyStatus, setMyAvatar } from '../lib/db';
 import { Avatar } from '../components/Avatar';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `/avatars/av${i + 1}.jpg`);
@@ -32,6 +32,13 @@ export default function Perfil() {
     setAvatar(url);
     try { await setMyAvatar(session.group, session.name, url); } catch {}
   };
+
+  const invite = () => {
+    const url = `${window.location.origin}/?join=${encodeURIComponent(session.group)}`;
+    if (navigator.share) navigator.share({ title: 'NEMO', text: 'Sumate a mi grupo en NEMO 🎉', url });
+    else { navigator.clipboard.writeText(url); alert('Link copiado: ' + url); }
+  };
+  const leave = () => { if (confirm('¿Salir del grupo?')) { clearSession(); nav('/'); } };
 
   const save = async () => {
     // guardar estado
@@ -81,6 +88,13 @@ export default function Perfil() {
         <button className="neon-box" style={{ '--nc': 'var(--green)', ...S.save }} onClick={save}>
           <span className="neon-text" style={{ '--nc': 'var(--green)' }}>GUARDAR</span>
         </button>
+
+        <div style={S.divider} />
+
+        <button className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.invite }} onClick={invite}>
+          <span className="neon-text" style={{ '--nc': 'var(--magenta)' }}>INVITAR GENTE AL GRUPO</span>
+        </button>
+        <button style={S.leave} onClick={leave}>salir del grupo</button>
       </div>
     </div>
   );
@@ -98,4 +112,7 @@ const S = {
   label: { display: 'block', color: 'var(--ink-dim)', fontSize: 12, fontWeight: 900, letterSpacing: 2, marginBottom: 8, marginTop: 18 },
   input: { width: '100%', padding: '14px 16px', color: 'var(--ink)', fontSize: 16, fontWeight: 600, outline: 'none', background: 'rgba(8,6,10,0.5)', fontFamily: 'inherit' },
   save: { width: '100%', padding: 16, fontSize: 15, fontWeight: 900, letterSpacing: 2, marginTop: 28, color: '#fff' },
+  divider: { height: 1, background: 'var(--card-border)', margin: '28px 0 20px' },
+  invite: { width: '100%', padding: 16, fontSize: 14, fontWeight: 900, letterSpacing: 1, color: '#fff' },
+  leave: { display: 'block', width: '100%', margin: '16px auto 0', color: 'var(--ink-dim)', fontSize: 13, fontWeight: 700, background: 'none', textAlign: 'center' },
 };

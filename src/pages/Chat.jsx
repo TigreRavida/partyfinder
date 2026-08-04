@@ -42,10 +42,7 @@ export default function Chat() {
       <div style={S.head}>
         <div style={S.brandRow}>
           <button onClick={() => nav('/menu')} style={{ background: 'none', padding: 0 }}><span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span></button>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999 }}><Avatar name={session?.name} uri={myAvatar} size={34} /></button>
-            <button style={S.gear} onClick={() => nav('/miembros')}>⚙</button>
-          </div>
+          <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999 }}><Avatar name={session?.name} uri={myAvatar} size={36} /></button>
         </div>
         <div style={S.kicker}>CHAT</div>
         <div style={S.laser} />
