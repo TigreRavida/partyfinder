@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VENUE, latLonToFrac, stageAt, insideVenue, metersToLatLon } from '../lib/venue';
-import { loadSession, fetchPresence, subscribePresence, upsertPresence, setMyStatus } from '../lib/db';
+import { loadSession, fetchPresence, subscribePresence, upsertPresence, setMyStatus,
+  createSpot, fetchSpots, deleteSpot, renameSpot, subscribeSpots, deviceId } from '../lib/db';
 import { SIM, simXY, simSubscribe, simMove, watchPosition, readBattery } from '../lib/geo';
 
 const STALE = 15 * 60e3;
@@ -16,9 +17,14 @@ export default function Mapa() {
   const [statusEdit, setStatusEdit] = useState(false);
   const [draft, setDraft] = useState('');
   const [view, setView] = useState(null);
+  const [pins, setPins] = useState([]);           // puntos de encuentro guardados
+  const [placing, setPlacing] = useState(false);  // modo "colocar pin"
+  const [pinView, setPinView] = useState(null);   // pin tocado (editar/eliminar)
+  const [pinDraft, setPinDraft] = useState('');   // nombre al crear/editar
 
   // medir el contenedor para dimensionar el plano rotado (como en Expo con winH)
   const stageRef = useRef(null);
+  const canvasRef = useRef(null);
   useEffect(() => {
     // bloquear giro: el mapa ya se ve apaisado por CSS, girar el teléfono lo rompe
     try { screen.orientation?.lock?.('portrait').catch(() => {}); } catch {}
@@ -45,6 +51,8 @@ export default function Mapa() {
   useEffect(() => {
     if (!session) { nav('/'); return; }
     fetchPresence(session.group).then(setRows).catch(() => {});
+    fetchSpots(session.group).then(setPins).catch(() => {});
+    const unsubPins = subscribeSpots(session.group, () => fetchSpots(session.group).then(setPins).catch(() => {}));
     const unsub = subscribePresence(session.group, (r) =>
       setRows((cur) => [...cur.filter((x) => x.member !== r.member), r]));
     // publicar mi posición
@@ -64,7 +72,7 @@ export default function Mapa() {
       stopWatch = watchPosition((fix) => setMyLL({ lat: fix.lat, lon: fix.lon }));
     }
     const t = setInterval(() => force((n) => n + 1), 15000);
-    return () => { unsub(); clearInterval(beat); clearInterval(t); stopWatch(); };
+    return () => { unsub(); unsubPins(); clearInterval(beat); clearInterval(t); stopWatch(); };
   }, [session?.group]);
 
   const members = useMemo(() => {
@@ -115,6 +123,59 @@ export default function Mapa() {
     try { await setMyStatus(session.group, session.name, draft.trim()); } catch {}
   };
 
+  // --- PUNTOS DE ENCUENTRO (pines) ---
+  // convierte un tap (clientX,clientY) en fracción u,v del mapa, deshaciendo
+  // la rotación 90°, el zoom y el pan del lienzo.
+  const tapToUV = (clientX, clientY) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const r = canvas.getBoundingClientRect();
+    // punto relativo al centro del lienzo (donde está el transformOrigin)
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    let dx = clientX - cx;
+    let dy = clientY - cy;
+    // deshacer zoom
+    dx /= zoom; dy /= zoom;
+    // el lienzo sin rotar mide (box.h) x (box.h*aspect); tras rotate(90deg)
+    // su ancho visual = box.h*aspect y alto visual = box.h.
+    // deshacer rotación 90° horaria: (x',y') → (y', -x')
+    const lw = box.h;                 // ancho del lienzo sin rotar
+    const lh = box.h * VENUE.aspect;  // alto del lienzo sin rotar
+    // coords dentro del lienzo sin rotar, con origen en el centro:
+    const ux = dy;      // inversa de la rotación
+    const uy = -dx;
+    // pasar a fracción 0..1 (origen esquina sup-izq del lienzo sin rotar)
+    const u = (ux + lw / 2) / lw;
+    const v = (uy + lh / 2) / lh;
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+    return { u, v };
+  };
+  const onMapTap = (e) => {
+    if (!placing) return;
+    const t = e.changedTouches ? e.changedTouches[0] : e;
+    const uv = tapToUV(t.clientX, t.clientY);
+    if (!uv) return;
+    setPlacing(false);
+    const name = prompt('Nombre del punto de encuentro:');
+    if (name == null || !name.trim()) return;
+    createSpot(session.group, name.trim(), uv.u, uv.v, deviceId(), session.name)
+      .then(() => fetchSpots(session.group).then(setPins))
+      .catch((err) => alert('No se pudo crear: ' + err.message));
+  };
+  const editPin = async () => {
+    const name = prompt('Nuevo nombre:', pinView.name);
+    if (name == null) return;
+    if (!name.trim()) return;
+    try { await renameSpot(pinView.id, name.trim()); await fetchSpots(session.group).then(setPins); setPinView(null); }
+    catch (err) { alert('No se pudo editar: ' + err.message); }
+  };
+  const removePin = async () => {
+    if (!confirm(`¿Eliminar "${pinView.name}"?`)) return;
+    try { await deleteSpot(pinView.id); await fetchSpots(session.group).then(setPins); setPinView(null); }
+    catch (err) { alert('No se pudo eliminar: ' + err.message); }
+  };
+
   // gestos de zoom/pan sobre el contenedor
   const onTouchStart = (e) => {
     if (e.touches.length === 2) {
@@ -152,7 +213,7 @@ export default function Mapa() {
       {/* foto satelital rotada 90° para llenar la pantalla vertical completa.
           La imagen es panorámica (ancha); al rotarla queda alta y ocupa todo. */}
       <div ref={stageRef} style={S.stage} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-        <div style={{
+        <div ref={canvasRef} onClick={onMapTap} style={{
           position: 'relative',
           // el lienzo (sin rotar) mide: ancho = altoPantalla, alto = altoPantalla*aspect.
           // al rotar 90°, su ancho visual pasa a ser el alto de pantalla (llena vertical).
@@ -161,10 +222,25 @@ export default function Mapa() {
           transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom}) rotate(90deg)`,
           transformOrigin: 'center',
           flexShrink: 0,
+          cursor: placing ? 'crosshair' : 'default',
         }}>
           <img src={VENUE.image} alt="Loveland"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
             draggable={false} />
+          {/* pines de punto de encuentro */}
+          <div style={{ position: 'absolute', inset: 0 }}>
+            {pins.map((p) => {
+              const px = p.x * box.h;
+              const py = p.y * box.h * VENUE.aspect;
+              return (
+                <button key={p.id} onClick={(e) => { e.stopPropagation(); setPinView(p); }}
+                  style={{ ...S.pinMark, left: px, top: py }}>
+                  <span style={S.pinIcon}>📍</span>
+                  <span style={S.pinLabel}>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
           {/* capa de gente */}
           <div style={{ position: 'absolute', inset: 0 }}>
             {members.map((m) => {
@@ -196,6 +272,8 @@ export default function Mapa() {
           {VENUE.name.toUpperCase()} · {active} {showMon ? '▲' : '▼'}
         </button>
         <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅</button>
+        <button style={{ ...S.pill, ...S.pillPin, ...(placing ? S.pillPinOn : {}) }}
+          onClick={() => setPlacing((v) => !v)} title="Marcar punto de encuentro">📍</button>
       </div>
 
       {showMon && (
@@ -241,6 +319,29 @@ export default function Mapa() {
             {view.status ? <p style={S.vstatus}>"{view.status}"</p> : <p style={S.vsub}>Sin estado por ahora.</p>}
             <p style={S.vsub}>{view.ageMs < 90e3 ? 'en evento ahora' : `visto hace ${Math.round(view.ageMs / 60000)} min`}
               {view.battery != null ? ` · ${view.battery}% 🔋` : ''}</p>
+            <button className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.msgBtn }}
+              onClick={() => nav(`/conv?kind=dm&to=${encodeURIComponent(view.member)}`)}>
+              <span className="neon-text" style={{ '--nc': 'var(--cyan)' }}>✉ MENSAJE</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {placing && (
+        <div style={S.placingBanner}>📍 Tocá el mapa para marcar el punto · <span onClick={() => setPlacing(false)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>cancelar</span></div>
+      )}
+
+      {pinView && (
+        <div style={S.modalWrap} onClick={() => setPinView(null)}>
+          <div style={S.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 style={S.modalH}>📍 {pinView.name}</h3>
+            <p style={S.vsub}>Punto de encuentro{pinView.author ? ` · por ${pinView.author}` : ''}</p>
+            <button className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.msgBtn }} onClick={editPin}>
+              <span className="neon-text" style={{ '--nc': 'var(--cyan)' }}>✎ EDITAR NOMBRE</span>
+            </button>
+            <button className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.msgBtn, marginTop: 8 }} onClick={removePin}>
+              <span className="neon-text" style={{ '--nc': 'var(--magenta)' }}>🗑 ELIMINAR</span>
+            </button>
           </div>
         </div>
       )}
@@ -329,6 +430,12 @@ const S = {
   pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', whiteSpace: 'nowrap' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
+  pillPin: { border: '1.5px solid #FF3B3B', boxShadow: '0 0 10px rgba(255,59,59,0.6)', padding: '8px 12px' },
+  pillPinOn: { background: '#FF3B3B', boxShadow: '0 0 16px rgba(255,59,59,0.9)' },
+  pinMark: { position: 'absolute', transform: 'translate(-50%,-100%) rotate(90deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, background: 'none', padding: 0, whiteSpace: 'nowrap', zIndex: 5 },
+  pinIcon: { fontSize: 24, filter: 'drop-shadow(0 0 4px rgba(255,59,59,0.9))' },
+  pinLabel: { fontSize: 11, fontWeight: 900, color: '#fff', background: 'rgba(8,6,10,0.85)', padding: '2px 7px', borderRadius: 8, border: '1px solid #FF3B3B' },
+  placingBanner: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 58px)', left: 12, right: 12, background: 'rgba(255,59,59,0.95)', color: '#fff', fontSize: 13, fontWeight: 800, padding: '10px 14px', borderRadius: 12, textAlign: 'center', zIndex: 15 },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' },
   rowK: { fontSize: 12, fontWeight: 900, letterSpacing: 0.5 }, rowV: { fontSize: 16, fontWeight: 900 },
@@ -346,6 +453,7 @@ const S = {
   modalH: { color: 'var(--ink)', fontSize: 20, fontWeight: 900, margin: '0 0 12px' },
   vstatus: { color: 'var(--cyan)', fontSize: 17, fontWeight: 700, fontStyle: 'italic' },
   vsub: { color: 'var(--ink-dim)', fontSize: 13 },
+  msgBtn: { width: '100%', padding: 13, marginTop: 16, fontSize: 14, fontWeight: 900, letterSpacing: 1, color: '#fff' },
   input: { width: '100%', background: 'var(--card)', border: '1.5px solid var(--card-border)', borderRadius: 14, padding: 15, color: 'var(--ink)', fontSize: 16, marginBottom: 12 },
   btnCyan: { width: '100%', background: 'var(--cyan)', color: '#00201D', borderRadius: 14, padding: 15, fontSize: 14, fontWeight: 900, letterSpacing: 0.5, boxShadow: '0 0 14px rgba(53,231,225,0.5)' },
 };

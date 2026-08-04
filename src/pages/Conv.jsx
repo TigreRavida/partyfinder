@@ -81,8 +81,9 @@ export default function Conv() {
       <div style={S.inputBar}>
         <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mensaje"
           type="text" inputMode="text" autoComplete="off" autoCorrect="off" autoCapitalize="sentences"
-          spellCheck="false" enterKeyHint="send" name="nemo-chat-field" data-lpignore="true" data-form-type="other"
-          data-1p-ignore="true"
+          spellCheck="false" enterKeyHint="send" name={`msg_${Math.random().toString(36).slice(2, 8)}`}
+          data-lpignore="true" data-form-type="other" data-1p-ignore="true" data-bwignore="true"
+          aria-autocomplete="none" role="textbox"
           style={S.input} onKeyDown={(e) => e.key === 'Enter' && send()} />
         <button style={{ ...S.send, opacity: draft.trim() ? 1 : 0.4 }} onClick={send}>➤</button>
       </div>

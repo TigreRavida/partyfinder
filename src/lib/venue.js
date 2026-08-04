@@ -38,6 +38,17 @@ export function latLonToFrac(lat, lon) {
 }
 export function gpsToFrac(lat, lon) { return latLonToFrac(lat, lon); }
 
+// inversa de latLonToFrac: (u,v) fracción de imagen → lat/lon
+const MINV = [[0.007790, 0.006690], [0.004239, -0.002978]];
+export function fracToLatLon(u, v) {
+  const a = u - (-7072.488930);
+  const b = v - (7517.146854);
+  const lon = MINV[0][0] * a + MINV[0][1] * b;
+  const lat = MINV[1][0] * a + MINV[1][1] * b;
+  return { lat, lon };
+}
+
+
 // punto en polígono (ray casting)
 export function pointInPolygon(lon, lat, poly) {
   let inside = false;
