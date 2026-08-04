@@ -27,8 +27,8 @@ export default function Timetable() {
   return (
     <div style={S.root}>
       <div style={S.head}>
-        <button style={S.back} onClick={() => nav('/mapa')}>‹</button>
-        <span className="neon-tube" style={{ '--nc': 'var(--gold)', fontSize: 20, fontWeight: 900 }}>LINE-UP</span>
+        <button style={S.back} onClick={() => nav('/menu')}>‹</button>
+        <span className="neon-tube" style={{ '--nc': 'var(--gold)', fontSize: 20, fontWeight: 900 }}>TIMETABLE</span>
       </div>
 
       {/* días */}
@@ -75,7 +75,7 @@ export default function Timetable() {
         })}
         {sets.length === 0 && <p style={S.empty}>Sin datos para este filtro.</p>}
       </div>
-      <TabBar active="mapa" />
+      <TabBar active="lineup" />
     </div>
   );
 }

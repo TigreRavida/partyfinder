@@ -27,6 +27,10 @@ export default function Menu() {
 
       <div style={{ marginBottom: 44, zIndex: 1 }}><Wordmark size={46} /></div>
 
+      <button className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.big }} onClick={() => nav('/lineup')}>
+        <span className="neon-text" style={{ '--nc': 'var(--cyan)', ...S.bigTxt }}>TIMETABLE</span>
+      </button>
+
       <button className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.big }} onClick={() => nav('/chat')}>
         <span className="neon-text" style={{ '--nc': 'var(--magenta)', ...S.bigTxt }}>CHATS</span>
       </button>
@@ -35,17 +39,14 @@ export default function Menu() {
         <span className="neon-text" style={{ '--nc': 'var(--magenta)', ...S.bigTxt }}>MAPA</span>
       </button>
 
-      <button style={S.spotsLink} onClick={() => nav('/spots')}>
-        <span className="neon-text" style={{ '--nc': 'var(--cyan)', fontSize: 13, fontWeight: 900, letterSpacing: 2 }}>◆ SPOTS</span>
-      </button>
     </div>
   );
 }
 
 const S = {
-  root: { flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', gap: 24 },
+  root: { flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 28px', gap: 18 },
   cables: { position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 },
-  big: { width: '100%', maxWidth: 290, aspectRatio: '1.6 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 22, zIndex: 1 },
-  bigTxt: { fontSize: 40, fontWeight: 900, letterSpacing: 3 },
+  big: { width: '100%', maxWidth: 290, aspectRatio: '2.2 / 1', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 20, zIndex: 1 },
+  bigTxt: { fontSize: 34, fontWeight: 900, letterSpacing: 2 },
   spotsLink: { marginTop: 8, padding: '10px 24px', background: 'none', zIndex: 1 },
 };

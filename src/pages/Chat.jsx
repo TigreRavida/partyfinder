@@ -8,12 +8,13 @@ import { Avatar } from '../components/Avatar';
 export default function Chat() {
   const nav = useNavigate();
   const session = loadSession();
+  const [myAvatar, setMyAvatar] = useState(null);
   const [rows, setRows] = useState([]);
   const [unread, setUnread] = useState({});
 
   const refresh = useCallback(() => {
     if (!session) return;
-    fetchPresence(session.group).then(setRows).catch(() => {});
+    fetchPresence(session.group).then((r) => { setRows(r); const me = r.find((x) => x.member === session.name); if (me?.avatar_url) setMyAvatar(me.avatar_url); }).catch(() => {});
     fetchConvUnread(session.group, session.name).then(setUnread).catch(() => {});
   }, [session?.group]);
 
@@ -41,7 +42,10 @@ export default function Chat() {
       <div style={S.head}>
         <div style={S.brandRow}>
           <button onClick={() => nav('/menu')} style={{ background: 'none', padding: 0 }}><span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span></button>
-          <button style={S.gear} onClick={() => nav('/miembros')}>⚙</button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999 }}><Avatar name={session?.name} uri={myAvatar} size={34} /></button>
+            <button style={S.gear} onClick={() => nav('/miembros')}>⚙</button>
+          </div>
         </div>
         <div style={S.kicker}>CHAT</div>
         <div style={S.laser} />
@@ -92,6 +96,6 @@ const S = {
   groupIcon: { width: 44, height: 44, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold)', fontSize: 22, fontWeight: 900 },
   rowName: { fontSize: 16, fontWeight: 900 },
   rowSub: { fontSize: 13, marginTop: 2 },
-  badge: { borderRadius: 999, color: '#fff', minWidth: 24, height: 24, padding: '0 8px', color: '#00201D', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 8px rgba(53,231,225,0.6)' },
+  badge: { borderRadius: 999, minWidth: 24, height: 24, padding: '0 8px', color: '#fff', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 8px rgba(53,231,225,0.6)' },
   empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', margin: 0, textAlign: 'center', marginTop: 40 },
 };

@@ -40,13 +40,13 @@ export default function Perfil() {
     if (name.trim() && name.trim() !== session.name) {
       saveSession({ ...session, name: name.trim() });
     }
-    nav('/spots');
+    nav('/menu');
   };
 
   return (
     <div style={S.root}>
       <div style={S.head}>
-        <button style={S.back} onClick={() => nav('/spots')}>‹ SPOTS</button>
+        <button style={S.back} onClick={() => nav('/menu')}>‹ MENÚ</button>
         <span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 18, fontWeight: 900 }}>MI PERFIL</span>
       </div>
 

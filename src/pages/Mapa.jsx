@@ -183,7 +183,7 @@ export default function Mapa() {
 
       {/* barra superior horizontal */}
       <div style={S.top}>
-        <button style={S.pill} onClick={() => nav('/spots')}>‹ SALIR</button>
+        <button style={S.pill} onClick={() => nav('/menu')}>‹ SALIR</button>
         <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
           {VENUE.name.toUpperCase()} · {active} {showMon ? '▲' : '▼'}
         </button>

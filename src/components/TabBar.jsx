@@ -12,7 +12,7 @@ export function TabBar({ active }) {
     load(); const t = setInterval(load, 12000); return () => clearInterval(t);
   }, [active]);
   const Tab = ({ k, label, icon, badge }) => (
-    <button style={S.tab} onClick={() => active !== k && nav(k === 'spots' ? '/spots' : k === 'chat' ? '/chat' : '/mapa')}>
+    <button style={S.tab} onClick={() => active !== k && nav(k === 'lineup' ? '/lineup' : k === 'chat' ? '/chat' : '/mapa')}>
       <span className={active === k ? 'neon-text' : ''} style={{ '--nc': 'var(--cyan)', position: 'relative', fontSize: 19, color: active === k ? '#fff' : 'var(--ink-faint)' }}>
         {icon}
         {badge > 0 && <span className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.badge }}>{badge > 9 ? '9+' : badge}</span>}
@@ -22,7 +22,7 @@ export function TabBar({ active }) {
   );
   return (
     <div style={S.bar}>
-      <Tab k="spots" label="SPOTS" icon="◆" />
+      <Tab k="lineup" label="TIMETABLE" icon="♪" />
       <Tab k="chat" label="CHAT" icon="✦" badge={active !== 'chat' ? unread : 0} />
       <Tab k="mapa" label="MAPA" icon="◎" />
     </div>

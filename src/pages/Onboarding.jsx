@@ -41,12 +41,12 @@ export default function Onboarding() {
       <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
         value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE" />
       <input className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.input }}
-        value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="GRUPO"
+        value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="NOMBRE DE GRUPO / CREW"
         disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()} />
 
       <button className={ready ? 'neon-box' : ''} onClick={go} disabled={!ready}
         style={{ '--nc': 'var(--green)', ...S.continue, opacity: ready ? 1 : 0.35 }}>
-        <span className={ready ? 'neon-text' : ''} style={{ '--nc': 'var(--green)' }}>ENTRAR</span>
+        <span className={ready ? 'neon-text' : ''} style={{ '--nc': 'var(--green)' }}>INGRESAR</span>
       </button>
     </div>
   );
