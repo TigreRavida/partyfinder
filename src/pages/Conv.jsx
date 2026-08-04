@@ -64,11 +64,13 @@ export default function Conv() {
       <div style={S.msgs}>
         {msgs.map((m) => {
           const mine = m.author === session?.name;
+          const time = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           return (
             <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
               <div style={{ ...S.bubble, ...(mine ? S.mine : S.theirs) }}>
                 {!mine && isGroup && <div style={S.author}>{m.author}</div>}
                 <div style={{ color: 'var(--ink)' }}>{m.body}</div>
+                {time && <div style={S.time}>{time}</div>}
               </div>
             </div>
           );
@@ -92,6 +94,7 @@ const S = {
   title: { fontSize: 19, fontWeight: 900, flex: 1 },
   msgs: { flex: 1, overflowY: 'auto', padding: 16 },
   bubble: { maxWidth: '78%', borderRadius: 16, padding: '9px 13px' },
+  time: { fontSize: 10, color: 'var(--ink-faint)', textAlign: 'right', marginTop: 3, marginBottom: -2 },
   mine: { background: 'rgba(53,231,225,0.16)', border: '1px solid var(--cyan)', boxShadow: '0 0 8px rgba(53,231,225,0.3)', borderBottomRightRadius: 4 },
   theirs: { background: 'rgba(176,107,255,0.12)', border: '1px solid var(--violet)', boxShadow: '0 0 8px rgba(176,107,255,0.25)', borderBottomLeftRadius: 4 },
   author: { color: 'var(--magenta)', fontSize: 11, fontWeight: 900, marginBottom: 2 },

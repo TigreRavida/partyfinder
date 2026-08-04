@@ -66,8 +66,15 @@ export default function Chat() {
             <button key={m.member} className="neon-box" style={{ '--nc': c, ...S.row }}
               onClick={() => nav(`/conv?kind=dm&to=${encodeURIComponent(m.member)}`)}>
               <Avatar name={m.member} uri={m.avatar_url} size={44} />
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div className="neon-text" style={{ '--nc': c, ...S.rowName }}>{m.member}</div>
+              <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="neon-text" style={{ '--nc': c, ...S.rowName }}>{m.member}</span>
+                  {m.battery != null && (
+                    <span style={{ ...S.batt, color: m.battery <= 20 ? 'var(--bad)' : 'var(--ink-dim)' }}>
+                      {m.battery <= 20 ? '🪫' : '🔋'} {m.battery}%
+                    </span>
+                  )}
+                </div>
                 <div style={{ ...S.rowSub, color: n > 0 ? 'var(--ink)' : 'var(--ink-dim)' }}>
                   {n > 0 ? `${n} mensaje${n > 1 ? 's' : ''} sin leer` : (m.status || 'Toca para escribirle')}
                 </div>
@@ -95,6 +102,7 @@ const S = {
   pinned: { border: '1px solid var(--magenta)' },
   groupIcon: { width: 44, height: 44, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold)', fontSize: 22, fontWeight: 900 },
   rowName: { fontSize: 16, fontWeight: 900 },
+  batt: { fontSize: 12, fontWeight: 800, flexShrink: 0, whiteSpace: 'nowrap' },
   rowSub: { fontSize: 13, marginTop: 2 },
   badge: { borderRadius: 999, minWidth: 24, height: 24, padding: '0 8px', color: '#fff', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 8px rgba(53,231,225,0.6)' },
   empty: { color: 'var(--ink-dim)', fontSize: 14, fontFamily: 'inherit', margin: 0, textAlign: 'center', marginTop: 40 },
