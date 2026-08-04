@@ -43,7 +43,16 @@ export default function Miembros() {
       const stale = age > STALE || m.lat == null;
       if (stale) { noSignal.push(m); continue; }
       if (insideVenue(m.lat, m.lon)) {
-        const st = stageAt(m.lat, m.lon);
+        let st = stageAt(m.lat, m.lon);
+        if (!st) {
+          const kLat = 110540, kLon = 111320 * Math.cos(52.3677 * Math.PI / 180);
+          let best = null, bestD = 45;
+          for (const s of VENUE.stages) {
+            const d = Math.hypot((m.lat - s.lat) * kLat, (m.lon - s.lon) * kLon);
+            if (d < bestD) { bestD = d; best = s.name; }
+          }
+          st = best;
+        }
         if (st) { (inStage[st] ??= []).push(m); }
         else inVenue.push(m);
       } else {

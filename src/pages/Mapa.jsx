@@ -79,10 +79,20 @@ export default function Mapa() {
 
   const monitor = useMemo(() => {
     const byStage = {}; let inside = 0, outside = 0;
+    const kLat = 110540, kLon = 111320 * Math.cos(52.3677 * Math.PI / 180);
     for (const m of members) {
       if (m.stale || m.lat == null) continue;
       if (insideVenue(m.lat, m.lon)) inside++; else outside++;
-      const s = stageAt(m.lat, m.lon);
+      // asignar al escenario cuyo polígono la contiene, o al más cercano dentro de 45m
+      let s = stageAt(m.lat, m.lon);
+      if (!s) {
+        let best = null, bestD = 45;
+        for (const st of VENUE.stages) {
+          const d = Math.hypot((m.lat - st.lat) * kLat, (m.lon - st.lon) * kLon);
+          if (d < bestD) { bestD = d; best = st.name; }
+        }
+        s = best;
+      }
       if (s) byStage[s] = (byStage[s] ?? 0) + 1;
     }
     return { byStage, inside, outside };
@@ -131,14 +141,16 @@ export default function Mapa() {
 
   return (
     <div style={S.root}>
-      {/* foto satelital REAL (a escala), sin rotación — se ve derecha.
-          La gente se posiciona con la transformación calibrada lat/lon→(u,v). */}
+      {/* foto satelital rotada 90° para llenar la pantalla vertical completa.
+          La imagen es panorámica (ancha); al rotarla queda alta y ocupa todo. */}
       <div ref={stageRef} style={S.stage} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
         <div style={{
           position: 'relative',
-          width: box.w,
-          height: box.w * VENUE.aspect,   // alto = ancho * (altoImg/anchoImg)
-          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
+          // el lienzo (sin rotar) mide: ancho = altoPantalla, alto = altoPantalla*aspect.
+          // al rotar 90°, su ancho visual pasa a ser el alto de pantalla (llena vertical).
+          width: box.h,
+          height: box.h * VENUE.aspect,
+          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom}) rotate(90deg)`,
           transformOrigin: 'center',
           flexShrink: 0,
         }}>
@@ -150,8 +162,8 @@ export default function Mapa() {
             {members.map((m) => {
               if (m.lat == null) return null;
               const f = latLonToFrac(m.lat, m.lon);
-              const px = f.u * box.w;
-              const py = f.v * box.w * VENUE.aspect;
+              const px = f.u * box.h;
+              const py = f.v * box.h * VENUE.aspect;
               return (
                 <button key={m.member}
                   onClick={() => { if (m.mine) { setDraft(m.status ?? ''); setStatusEdit(true); } else setView(m); }}
@@ -297,12 +309,12 @@ function Joystick() {
 const S = {
   root: { position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' },
   stage: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', overflow: 'hidden' },
-  person: { position: 'absolute', transform: 'translate(-50%,-50%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, background: 'none', padding: 0, whiteSpace: 'nowrap' },
+  person: { position: 'absolute', transform: 'translate(-50%,-50%) rotate(-90deg)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, background: 'none', padding: 0, whiteSpace: 'nowrap' },
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
-  top: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 10px)', left: 12, right: 12, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, zIndex: 10 },
-  pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', whiteSpace: 'nowrap' },
+  top: { position: 'absolute', top: 0, bottom: 0, right: 8, width: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 60, zIndex: 10, pointerEvents: 'none' },
+  pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', whiteSpace: 'nowrap', transform: 'rotate(90deg)', pointerEvents: 'auto' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
   monitor: { position: 'absolute', top: 'max(env(safe-area-inset-top), 10px)', marginTop: 42, right: 12, width: 210, background: 'rgba(8,6,10,0.95)', border: '2px solid var(--cyan)', borderRadius: 14, padding: 14, zIndex: 15, boxShadow: '0 0 16px rgba(53,231,225,0.5)' },
