@@ -39,9 +39,9 @@ export default function Miembros() {
     const outside = [];   // fuera del predio
     const noSignal = [];  // sin ubicación reciente
     for (const m of rows) {
-      const age = now - new Date(m.updated_at || 0).getTime();
-      const stale = age > STALE || m.lat == null;
-      if (stale) { noSignal.push(m); continue; }
+      // "sin ubicación" solo si nunca publicó posición; si tiene última posición
+      // conocida, lo ubicamos por ella (igual que el mapa)
+      if (m.lat == null) { noSignal.push(m); continue; }
       if (insideVenue(m.lat, m.lon)) {
         const st = stageAt(m.lat, m.lon);
         if (st) { (inStage[st] ??= []).push(m); }

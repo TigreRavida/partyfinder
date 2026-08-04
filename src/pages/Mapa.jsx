@@ -90,7 +90,10 @@ export default function Mapa() {
     // Invariantes: dentro + fuera = total ; suma(escenarios) + predio = dentro
     const byStage = {}; let predio = 0, inside = 0, outside = 0;
     for (const m of members) {
-      if (m.stale || m.lat == null) continue;
+      // contamos a todo el que tiene una posición conocida (igual que los puntos
+      // dibujados en el mapa). No excluimos por antigüedad: mostramos su última
+      // ubicación conocida, así los números coinciden con lo que se ve.
+      if (m.lat == null) continue;
       if (insideVenue(m.lat, m.lon)) {
         inside++;
         const s = stageAt(m.lat, m.lon);
