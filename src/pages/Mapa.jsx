@@ -83,26 +83,24 @@ export default function Mapa() {
   }, [rows, session?.name, myLL]);
 
   const monitor = useMemo(() => {
-    const byStage = {}; let inside = 0, outside = 0;
-    const kLat = 110540, kLon = 111320 * Math.cos(52.3677 * Math.PI / 180);
+    // Teoría de conjuntos pura, sin radios:
+    //  - dentro del polígono de un escenario → ese escenario
+    //  - dentro del predio pero fuera de todo escenario → PREDIO
+    //  - fuera del predio → FUERA
+    // Invariantes: dentro + fuera = total ; suma(escenarios) + predio = dentro
+    const byStage = {}; let predio = 0, inside = 0, outside = 0;
     for (const m of members) {
       if (m.stale || m.lat == null) continue;
-      const isInside = insideVenue(m.lat, m.lon);
-      if (isInside) inside++; else outside++;
-      // asignar al escenario cuyo polígono la contiene; si no, al más cercano
-      // (hasta 90m = "zona del escenario"). Solo cuenta gente dentro del predio.
-      let s = stageAt(m.lat, m.lon);
-      if (!s && isInside) {
-        let best = null, bestD = 90;
-        for (const st of VENUE.stages) {
-          const d = Math.hypot((m.lat - st.lat) * kLat, (m.lon - st.lon) * kLon);
-          if (d < bestD) { bestD = d; best = st.name; }
-        }
-        s = best;
+      if (insideVenue(m.lat, m.lon)) {
+        inside++;
+        const s = stageAt(m.lat, m.lon);
+        if (s) byStage[s] = (byStage[s] ?? 0) + 1;
+        else predio++;
+      } else {
+        outside++;
       }
-      if (s) byStage[s] = (byStage[s] ?? 0) + 1;
     }
-    return { byStage, inside, outside };
+    return { byStage, predio, inside, outside };
   }, [members]);
 
   const active = members.filter((m) => m.lat != null).length;
@@ -209,6 +207,10 @@ export default function Mapa() {
               <span style={S.stageV}>{monitor.byStage[s.name] ?? 0}</span>
             </div>
           ))}
+          <div style={S.rowSm}>
+            <span style={{ ...S.stageK, color: 'var(--ink-dim)' }}>PREDIO (sin escenario)</span>
+            <span style={S.stageV}>{monitor.predio}</span>
+          </div>
         </div>
       )}
 
