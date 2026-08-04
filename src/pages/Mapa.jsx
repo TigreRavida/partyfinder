@@ -131,34 +131,27 @@ export default function Mapa() {
 
   return (
     <div style={S.root}>
-      {/* plano apaisado — el lienzo mide (altoMarco x anchoMarco) y se rota 90°,
-          así el plano panorámico llena el ancho del teléfono y se ve completo */}
+      {/* foto satelital REAL (a escala), sin rotación — se ve derecha.
+          La gente se posiciona con la transformación calibrada lat/lon→(u,v). */}
       <div ref={stageRef} style={S.stage} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
         <div style={{
           position: 'relative',
-          width: box.h,      // alto del marco → tras rotar, es el ancho visual
-          height: box.w,     // ancho del marco → tras rotar, es el alto visual
-          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom}) rotate(90deg)`,
+          width: box.w,
+          height: box.w * VENUE.aspect,   // alto = ancho * (altoImg/anchoImg)
+          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
           transformOrigin: 'center',
           flexShrink: 0,
         }}>
-          {/* la imagen mantiene su proporción dentro del lienzo (contain) */}
           <img src={VENUE.image} alt="Loveland"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
             draggable={false} />
-          {/* capa de gente: mismo tamaño y proporción que la imagen contenida */}
+          {/* capa de gente */}
           <div style={{ position: 'absolute', inset: 0 }}>
             {members.map((m) => {
               if (m.lat == null) return null;
               const f = latLonToFrac(m.lat, m.lon);
-              // la imagen está 'contain' dentro del lienzo box.h x box.w.
-              // proporción imagen = 0.4661 (alto/ancho). lienzo prop = box.w/box.h.
-              // como el plano llena el ancho del lienzo, hay bandas arriba/abajo:
-              const imgW = box.h;                          // la imagen llena el ancho del lienzo
-              const imgH = box.h * VENUE.aspect;           // alto real de la imagen
-              const bandY = (box.w - imgH) / 2;            // banda superior (centrado vertical)
-              const px = f.u * imgW;
-              const py = bandY + f.v * imgH;
+              const px = f.u * box.w;
+              const py = f.v * box.w * VENUE.aspect;
               return (
                 <button key={m.member}
                   onClick={() => { if (m.mine) { setDraft(m.status ?? ''); setStatusEdit(true); } else setView(m); }}
@@ -304,7 +297,7 @@ function Joystick() {
 const S = {
   root: { position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' },
   stage: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none', overflow: 'hidden' },
-  person: { position: 'absolute', transform: 'translate(-50%,-50%)', transformOrigin: 'center', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 3, background: 'none', padding: 0, whiteSpace: 'nowrap' },
+  person: { position: 'absolute', transform: 'translate(-50%,-50%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, background: 'none', padding: 0, whiteSpace: 'nowrap' },
   dot: { width: 10, height: 10, borderRadius: 5, display: 'block' },
   name: { fontSize: 10, fontWeight: 900, marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },
   pstatus: { fontSize: 9, fontWeight: 700, color: 'var(--cyan)', textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap' },

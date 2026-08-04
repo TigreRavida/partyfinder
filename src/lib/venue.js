@@ -1,39 +1,51 @@
-// VENUE fijo — Loveland. Anclas y polígonos reales (coords del organizador).
+// venue.js — Loveland (foto satelital REAL, a escala).
+// Coordenadas y perímetro del pptx del organizador. La imagen está calibrada
+// contra los 6 escenarios (cuadros de color) por ajuste lineal de mínimos
+// cuadrados → proyección lat/lon ↔ fracción de imagen (u,v) precisa.
+
 export const VENUE = {
   name: 'Loveland',
   image: '/loveland.jpeg',
-  aspect: 0.4661,
+  aspect: 626 / 1264,  // alto/ancho de la foto satelital
+  // perímetro del predio (rectángulo del pptx): NE, NO, SO, SE
   perimeter: [
-    [4.818521, 52.369781], [4.813908, 52.369742],
-    [4.813736, 52.366958], [4.817913, 52.366925],
+    [4.819956, 52.370831],  // NE  [lon, lat]
+    [4.810554, 52.370831],  // NO
+    [4.810554, 52.364549],  // SO
+    [4.819956, 52.364549],  // SE
   ],
-  anchors: [
-    { name: '909',    lat: 52.368273, lon: 4.814614, u: 0.236, v: 0.392 },
-    { name: 'FIRE',   lat: 52.367593, lon: 4.814276, u: 0.065, v: 0.800 },
-    { name: 'CIRCLE', lat: 52.367202, lon: 4.815686, u: 0.339, v: 0.720 },
-    { name: 'RISE',   lat: 52.368208, lon: 4.815748, u: 0.452, v: 0.606 },
-    { name: 'NEST',   lat: 52.368621, lon: 4.816528, u: 0.538, v: 0.606 },
-    { name: 'ARENA',  lat: 52.369202, lon: 4.817810, u: 0.674, v: 0.706 },
-  ],
+  bounds: { latN: 52.370831, latS: 52.364549, lonW: 4.810554, lonE: 4.819956 },
+  // escenarios con su polígono real (4 esquinas [lon,lat]) del pptx
   stages: [
-    { name: 'ARENA',  poly: [[4.818147,52.369316],[4.817884,52.369421],[4.817455,52.369090],[4.817755,52.368979]] },
-    { name: 'NEST',   poly: [[4.816940,52.368622],[4.816650,52.368828],[4.816119,52.368622],[4.816403,52.368412]] },
-    { name: 'RISE',   poly: [[4.816040,52.368228],[4.815659,52.368402],[4.815423,52.368179],[4.815868,52.368022]] },
-    { name: 'CIRCLE', poly: [[4.815805,52.367167],[4.815778,52.367307],[4.815532,52.367218],[4.815628,52.367118]] },
-    { name: 'FIRE',   poly: [[4.814664,52.367394],[4.814251,52.367815],[4.814041,52.367805],[4.814149,52.367360]] },
-    { name: '909',    poly: [[4.814859,52.368248],[4.814612,52.368431],[4.814332,52.368301],[4.814654,52.368113]] },
+    { name: 'CIRCLE', lat: 52.367110, lon: 4.815646, poly: [[4.815778,52.367103],[4.815515,52.367103],[4.815515,52.367118],[4.815778,52.367118]] },
+    { name: 'FIRE',   lat: 52.365815, lon: 4.814198, poly: [[4.813814,52.366396],[4.813582,52.365328],[4.814650,52.365195],[4.814747,52.366340]] },
+    { name: '909',    lat: 52.367207, lon: 4.813230, poly: [[4.812725,52.367327],[4.812826,52.366989],[4.813727,52.367076],[4.813642,52.367435]] },
+    { name: 'RISE',   lat: 52.368044, lon: 4.815705, poly: [[4.815530,52.368285],[4.815306,52.367912],[4.815902,52.367808],[4.816083,52.368171]] },
+    { name: 'NEST',   lat: 52.368571, lon: 4.816521, poly: [[4.816550,52.368874],[4.816072,52.368584],[4.816422,52.368320],[4.817041,52.368508]] },
+    { name: 'ARENA',  lat: 52.368826, lon: 4.817540, poly: [[4.817839,52.368928],[4.817240,52.368928],[4.817240,52.368724],[4.817839,52.368724]] },
   ],
-  widthMeters: 325,
 };
 
-const kLat = 110540;
-const kLon = 111320 * Math.cos((52.3683 * Math.PI) / 180);
+// transformación calibrada lat/lon → (u,v) fracción de imagen [0..1]
+// (ajuste lineal de mínimos cuadrados contra los 6 escenarios visibles)
+const TU = [57.75510193, 129.75363503, -7072.48892975];
+const TV = [82.22754678, -151.09604564, 7517.14685445];
+export function latLonToFrac(lat, lon) {
+  return {
+    u: TU[0]*lon + TU[1]*lat + TU[2],
+    v: TV[0]*lon + TV[1]*lat + TV[2],
+  };
+}
+export function gpsToFrac(lat, lon) { return latLonToFrac(lat, lon); }
 
+// punto en polígono (ray casting)
 export function pointInPolygon(lon, lat, poly) {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i], [xj, yj] = poly[j];
-    if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    const intersect = ((yi > lat) !== (yj > lat)) &&
+      (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
   return inside;
 }
@@ -41,27 +53,16 @@ export function stageAt(lat, lon) {
   for (const s of VENUE.stages) if (pointInPolygon(lon, lat, s.poly)) return s.name;
   return null;
 }
-export function insideVenue(lat, lon) { return pointInPolygon(lon, lat, VENUE.perimeter); }
-
-export function latLonToFrac(lat, lon) {
-  let sw = 0, su = 0, sv = 0;
-  for (const a of VENUE.anchors) {
-    const dLat = (lat - a.lat) * kLat, dLon = (lon - a.lon) * kLon;
-    const d2 = dLat * dLat + dLon * dLon;
-    if (d2 < 1e-6) return { u: a.u, v: a.v };
-    const w = 1 / (d2 * d2);
-    sw += w; su += w * a.u; sv += w * a.v;
-  }
-  return { u: su / sw, v: sv / sw };
+export function insideVenue(lat, lon) {
+  const b = VENUE.bounds;
+  return lat <= b.latN && lat >= b.latS && lon >= b.lonW && lon <= b.lonE;
 }
 export function venueCenter() {
-  const clat = VENUE.anchors.reduce((s, a) => s + a.lat, 0) / VENUE.anchors.length;
-  const clon = VENUE.anchors.reduce((s, a) => s + a.lon, 0) / VENUE.anchors.length;
-  return { clat, clon };
+  const b = VENUE.bounds;
+  return { clat: (b.latN + b.latS) / 2, clon: (b.lonW + b.lonE) / 2 };
 }
 export function metersToLatLon(mx, my) {
   const { clat, clon } = venueCenter();
+  const kLat = 110540, kLon = 111320 * Math.cos(clat * Math.PI / 180);
   return { lat: clat + my / kLat, lon: clon + mx / kLon };
 }
-// GPS real → fracción del plano
-export function gpsToFrac(lat, lon) { return latLonToFrac(lat, lon); }
