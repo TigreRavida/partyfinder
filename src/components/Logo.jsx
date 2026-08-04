@@ -45,16 +45,14 @@ export function Wordmark({ size = 40 }) {
       fontSize: size,
       fontWeight: 900,
       letterSpacing: size * 0.06,
-      color: '#EAFBFF',
-      // capas de contorno: cian pegado → naranja → halo naranja/cian
+      color: '#FFE28C',
       textShadow: [
-        '0 0 1px #EAFBFF',
-        '0 0 2px #B6FBF8',
-        '-1px -1px 0 #35E7E1', '1px 1px 0 #35E7E1',
-        '0 0 6px #35E7E1',
-        '0 0 11px #FF6B2C',
+        '-1px -1px 0 #78F0FF', '1px 1px 0 #78F0FF',
+        '-1px 1px 0 #28B4D2', '1px -1px 0 #28B4D2',
+        '0 0 5px #35E7E1',
+        '0 0 10px #35E7E1',
         '0 0 22px #FF6B2C',
-        '0 0 38px rgba(255,107,44,0.6)',
+        '0 0 38px rgba(255,107,44,0.55)',
       ].join(', '),
     }}>
       NEMO

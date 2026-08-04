@@ -67,17 +67,17 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   color: #fff;
   text-shadow: 0 0 4px #fff, 0 0 10px var(--nc, var(--cyan)), 0 0 22px var(--nc, var(--cyan));
 }
-.neon-tube {  /* el título tipo letrero NEMO: relleno claro + triple contorno cian→naranja */
-  color: #EAFBFF;
+.neon-tube {  /* NEMO estilo cartel: relleno DORADO + contorno CIAN + halo naranja */
+  color: #FFE28C;
   text-shadow:
-    0 0 1px #EAFBFF,
-    0 0 2px #B6FBF8,
-    -1px -1px 0 var(--nc, #35E7E1),
-    1px 1px 0 var(--nc, #35E7E1),
-    0 0 6px var(--nc, #35E7E1),
-    0 0 11px #FF6B2C,
-    0 0 22px #FF6B2C,
-    0 0 38px rgba(255,107,44,0.55);
+    -1px -1px 0 #78F0FF,
+    1px 1px 0 #78F0FF,
+    -1px 1px 0 #28B4D2,
+    1px -1px 0 #28B4D2,
+    0 0 5px #35E7E1,
+    0 0 10px #35E7E1,
+    0 0 20px #FF6B2C,
+    0 0 34px rgba(255,107,44,0.55);
   letter-spacing: 2px;
 }
 /* pulso sutil de neón encendido */
