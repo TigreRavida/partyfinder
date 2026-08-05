@@ -32,10 +32,10 @@ export default function Onboarding() {
       <img src="/onboarding-bg.jpeg" alt="NEMO" style={S.bg} draggable={false} />
       <div style={S.overlay}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE"
-          style={{ ...S.field, top: '45.5%' }} />
+          style={{ ...S.field, top: '47.5%' }} />
         <input value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="NOMBRE DE GRUPO"
           disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()}
-          style={{ ...S.field, top: '62%' }} />
+          style={{ ...S.field, top: '64%' }} />
         <button onClick={go} disabled={!ready}
           className={ready ? 'neon-box' : ''}
           style={{ '--nc': 'var(--green)', ...S.enter, opacity: ready ? 1 : 0.4 }}>
@@ -51,10 +51,11 @@ const S = {
   bg: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   overlay: { position: 'absolute', inset: 0 },
   field: {
-    position: 'absolute', left: '22%', width: '56%', height: '8%',
-    background: 'transparent', border: 'none', outline: 'none',
+    position: 'absolute', left: '22%', width: '56%',
+    background: 'transparent', border: 'none', outline: 'none', margin: 0,
     color: '#EAFBFF', fontSize: 19, fontWeight: 800, textAlign: 'center', letterSpacing: 2,
-    textShadow: '0 0 6px rgba(53,231,225,0.6)',
+    textShadow: '0 0 6px rgba(53,231,225,0.6)', boxSizing: 'border-box',
+    paddingTop: '1.6%', paddingBottom: '1.6%', lineHeight: 1.1,
   },
   enter: {
     position: 'absolute', top: '78%', left: '22%', width: '56%', height: '8%',
