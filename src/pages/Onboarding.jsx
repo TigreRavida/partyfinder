@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSession, findMyIdentity } from '../lib/db';
-import { Logo } from '../components/Logo';
 
 export default function Onboarding() {
   const nav = useNavigate();
@@ -14,7 +13,6 @@ export default function Onboarding() {
   const go = async () => {
     if (!ready) return;
     const g = group.trim().toUpperCase();
-    // si este dispositivo ya entró a este grupo, reusar esa identidad (no duplicar)
     let finalName = name.trim();
     try {
       const existing = await findMyIdentity(g);
@@ -27,36 +25,40 @@ export default function Onboarding() {
     nav('/menu');
   };
 
+  // Fondo = onboarding-bg.jpeg (NEMO arriba + 2 cajas de neón). Inputs
+  // transparentes sobre cada caja; botón INGRESAR debajo (la imagen no lo trae).
   return (
     <div style={S.root}>
-      <div style={{ marginBottom: 48 }}><Logo size={120} /></div>
-
-      {preset && (
-        <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.invite }}>
-          <div style={S.inviteK}>TE INVITARON AL GRUPO</div>
-          <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.inviteG }}>{group}</div>
-        </div>
-      )}
-
-      <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
-        value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE" />
-      <input className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.input }}
-        value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="NOMBRE DE GRUPO"
-        disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()} />
-
-      <button className={ready ? 'neon-box' : ''} onClick={go} disabled={!ready}
-        style={{ '--nc': 'var(--green)', ...S.continue, opacity: ready ? 1 : 0.35 }}>
-        <span className={ready ? 'neon-text' : ''} style={{ '--nc': 'var(--green)' }}>INGRESAR</span>
-      </button>
+      <img src="/onboarding-bg.jpeg" alt="NEMO" style={S.bg} draggable={false} />
+      <div style={S.overlay}>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE"
+          style={{ ...S.field, top: '45.5%' }} />
+        <input value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="NOMBRE DE GRUPO"
+          disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()}
+          style={{ ...S.field, top: '62%' }} />
+        <button onClick={go} disabled={!ready}
+          className={ready ? 'neon-box' : ''}
+          style={{ '--nc': 'var(--green)', ...S.enter, opacity: ready ? 1 : 0.4 }}>
+          <span className={ready ? 'neon-text' : ''} style={{ '--nc': 'var(--green)', fontSize: 22, fontWeight: 900, letterSpacing: 3 }}>INGRESAR</span>
+        </button>
+      </div>
     </div>
   );
 }
 
 const S = {
-  root: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px', overflowY: 'auto' },
-  input: { width: '100%', padding: '18px 20px', color: 'var(--ink)', fontSize: 20, fontWeight: 800, textAlign: 'center', letterSpacing: 2, marginBottom: 18, outline: 'none', background: 'rgba(8,6,10,0.5)' },
-  continue: { width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, letterSpacing: 3, marginTop: 14, color: '#fff' },
-  invite: { width: '100%', padding: 16, marginBottom: 24, textAlign: 'center' },
-  inviteK: { color: 'var(--gold)', fontSize: 11, fontWeight: 900, letterSpacing: 2 },
-  inviteG: { fontSize: 30, fontWeight: 900, marginTop: 4 },
+  root: { flex: 1, position: 'relative', background: '#0a0a0c', overflow: 'hidden' },
+  bg: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+  overlay: { position: 'absolute', inset: 0 },
+  field: {
+    position: 'absolute', left: '22%', width: '56%', height: '8%',
+    background: 'transparent', border: 'none', outline: 'none',
+    color: '#EAFBFF', fontSize: 19, fontWeight: 800, textAlign: 'center', letterSpacing: 2,
+    textShadow: '0 0 6px rgba(53,231,225,0.6)',
+  },
+  enter: {
+    position: 'absolute', top: '78%', left: '22%', width: '56%', height: '8%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(8,6,10,0.4)', borderRadius: 14,
+  },
 };
