@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VENUE, latLonToFrac, stageAt, insideVenue, metersToLatLon } from '../lib/venue';
 import { loadSession, fetchPresence, subscribePresence, upsertPresence, setMyStatus,
-  createSpot, fetchSpots, deleteSpot, renameSpot, subscribeSpots, deviceId } from '../lib/db';
+  createSpot, fetchSpots, deleteSpot, renameSpot, updateSpotPos, subscribeSpots, deviceId } from '../lib/db';
 import { SIM, simXY, simSubscribe, simMove, watchPosition, readBattery } from '../lib/geo';
 import { Avatar } from '../components/Avatar';
 
@@ -20,7 +20,6 @@ export default function Mapa() {
   const [draft, setDraft] = useState('');
   const [view, setView] = useState(null);
   const [pins, setPins] = useState([]);           // puntos de encuentro guardados
-  const [placing, setPlacing] = useState(false);  // modo "colocar pin"
   const [pinView, setPinView] = useState(null);   // pin tocado (editar/eliminar)
   const [pinDraft, setPinDraft] = useState('');   // nombre al crear/editar
 
@@ -148,18 +147,47 @@ export default function Mapa() {
     if (u < 0 || u > 1 || v < 0 || v > 1) return null;
     return { u, v };
   };
-  const onMapTap = (e) => {
-    if (!placing) return;
-    const t = e.changedTouches ? e.changedTouches[0] : e;
-    const uv = tapToUV(t.clientX, t.clientY);
-    if (!uv) return;
-    setPlacing(false);
+  const onMapTap = () => {};  // ya no se usa (los pines se arrastran)
+
+  // crear un pin nuevo: aparece en el centro del mapa y el usuario lo arrastra
+  const addPin = async () => {
     const name = prompt('Nombre del punto de encuentro:');
     if (name == null || !name.trim()) return;
-    createSpot(session.group, name.trim(), uv.u, uv.v, deviceId(), session.name)
+    // lo creamos en el centro (u=0.5, v=0.5); después se arrastra
+    createSpot(session.group, name.trim(), 0.5, 0.5, deviceId(), session.name)
       .then(() => fetchSpots(session.group).then(setPins))
       .catch((err) => alert('No se pudo crear: ' + err.message));
   };
+
+  // arrastrar un pin existente para reposicionarlo
+  const dragPin = useRef(null);
+  const onPinDown = (e, pin) => {
+    e.stopPropagation();
+    dragPin.current = { id: pin.id, moved: false };
+  };
+  const onPinMove = (e) => {
+    if (!dragPin.current) return;
+    const t = e.touches ? e.touches[0] : e;
+    const uv = tapToUV(t.clientX, t.clientY);
+    if (!uv) return;
+    dragPin.current.moved = true;
+    // actualizar visualmente en vivo
+    setPins((cur) => cur.map((p) => p.id === dragPin.current.id ? { ...p, x: uv.u, y: uv.v } : p));
+  };
+  const onPinUp = async () => {
+    const d = dragPin.current;
+    dragPin.current = null;
+    if (!d) return;
+    if (!d.moved) { // no se arrastró: fue un toque → abrir editar/eliminar
+      const pin = pins.find((p) => p.id === d.id);
+      if (pin) setPinView(pin);
+      return;
+    }
+    // se arrastró: guardar la nueva posición
+    const pin = pins.find((p) => p.id === d.id);
+    if (pin) { try { await updateSpotPos(pin.id, pin.x, pin.y); } catch (err) { alert('No se pudo mover: ' + err.message); } }
+  };
+
   const editPin = async () => {
     const name = prompt('Nuevo nombre:', pinView.name);
     if (name == null) return;
@@ -209,8 +237,13 @@ export default function Mapa() {
     <div style={S.root}>
       {/* foto satelital rotada 90° para llenar la pantalla vertical completa.
           La imagen es panorámica (ancha); al rotarla queda alta y ocupa todo. */}
-      <div ref={stageRef} style={S.stage} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-        <div ref={canvasRef} onClick={onMapTap} style={{
+      <div ref={stageRef} style={S.stage}
+        onTouchStart={onTouchStart}
+        onTouchMove={(e) => { if (dragPin.current) onPinMove(e); else onTouchMove(e); }}
+        onTouchEnd={(e) => { if (dragPin.current) onPinUp(e); else onTouchEnd(e); }}
+        onMouseMove={(e) => { if (dragPin.current) onPinMove(e); }}
+        onMouseUp={() => { if (dragPin.current) onPinUp(); }}>
+        <div ref={canvasRef} style={{
           position: 'relative',
           // el lienzo (sin rotar) mide: ancho = altoPantalla, alto = altoPantalla*aspect.
           // al rotar 90°, su ancho visual pasa a ser el alto de pantalla (llena vertical).
@@ -219,7 +252,6 @@ export default function Mapa() {
           transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom}) rotate(90deg)`,
           transformOrigin: 'center',
           flexShrink: 0,
-          cursor: placing ? 'crosshair' : 'default',
         }}>
           <img src={VENUE.image} alt="Loveland"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
@@ -230,8 +262,10 @@ export default function Mapa() {
               const px = p.x * box.h;
               const py = p.y * box.h * VENUE.aspect;
               return (
-                <button key={p.id} onClick={(e) => { e.stopPropagation(); setPinView(p); }}
-                  style={{ ...S.pinMark, left: px, top: py }}>
+                <button key={p.id}
+                  onMouseDown={(e) => onPinDown(e, p)}
+                  onTouchStart={(e) => onPinDown(e, p)}
+                  style={{ ...S.pinMark, left: px, top: py, touchAction: 'none', cursor: 'grab' }}>
                   <span style={S.pinIcon}>📍</span>
                   <span style={S.pinLabel}>{p.name}</span>
                 </button>
@@ -273,8 +307,8 @@ export default function Mapa() {
         </button>
         )}
         <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅</button>
-        <button style={{ ...S.pill, ...S.pillPin, ...(placing ? S.pillPinOn : {}) }}
-          onClick={() => setPlacing((v) => !v)} title="Marcar punto de encuentro">📍</button>
+        <button style={{ ...S.pill, ...S.pillPin }}
+          onClick={addPin} title="Agregar punto de encuentro">📍</button>
       </div>
 
       {showMon && (
