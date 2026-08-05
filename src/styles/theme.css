@@ -110,16 +110,16 @@ input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appe
    vertical, así la app SIEMPRE se ve en portrait aunque el usuario gire.
    El mapa maneja su propia rotación DENTRO de este layout vertical, así que
    no se ve afectado. */
-@media only screen and (orientation: landscape) and (max-device-width: 950px) {
-  html { height: 100vw; width: 100vh; }
+@media only screen and (orientation: landscape) and (max-width: 950px) {
+  html, body { overflow: hidden; }
   #root {
-    position: absolute;
+    position: fixed;
     top: 0;
-    left: 100vw;
-    width: 100vh;      /* toma el alto físico como ancho */
-    height: 100vw;     /* y el ancho físico como alto */
-    transform: rotate(90deg);
-    transform-origin: 0 0;
+    left: 0;
+    width: 100vh;      /* dimensiones de portrait: ancho = alto del viewport */
+    height: 100vw;
+    transform: rotate(90deg) translateY(-100%);
+    transform-origin: top left;
     overflow: hidden;
   }
 }
