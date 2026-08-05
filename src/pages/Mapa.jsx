@@ -224,17 +224,6 @@ export default function Mapa() {
           <img src={VENUE.image} alt="Loveland"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
             draggable={false} />
-          {/* nombres de los escenarios sobre el mapa */}
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-            {VENUE.stages.map((s) => {
-              const f = latLonToFrac(s.lat, s.lon);
-              const px = f.u * box.h;
-              const py = f.v * box.h * VENUE.aspect;
-              return (
-                <span key={s.name} style={{ ...S.stageLabel, left: px, top: py }}>{s.name}</span>
-              );
-            })}
-          </div>
           {/* pines de punto de encuentro */}
           <div style={{ position: 'absolute', inset: 0 }}>
             {pins.map((p) => {
@@ -467,7 +456,6 @@ const S = {
   rowSm: { display: 'flex', justifyContent: 'space-between', padding: '2.5px 0' },
   stageK: { color: 'var(--ink-dim)', fontSize: 12.5, fontWeight: 700, letterSpacing: 1 },
   stageV: { color: 'var(--magenta)', fontSize: 13, fontWeight: 900 },
-  stageLabel: { position: 'absolute', transform: 'translate(-50%,-50%)', color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: 900, letterSpacing: 1, textShadow: '0 0 6px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)', whiteSpace: 'nowrap' },
   battChip: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 20px)', left: 20, background: 'rgba(20,6,8,0.92)', border: '1.5px solid var(--bad)', borderRadius: 999, padding: '8px 14px', color: '#fff', fontSize: 12, fontWeight: 900, boxShadow: '0 0 10px rgba(255,59,59,0.5)', zIndex: 12 },
   battList: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 58px)', left: 20, maxWidth: 220, background: 'rgba(12,8,14,0.97)', border: '1.5px solid var(--bad)', borderRadius: 14, padding: 12, zIndex: 13, boxShadow: '0 8px 30px rgba(0,0,0,0.6)' },
   battRow: { display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--ink)', fontSize: 13, fontWeight: 700, padding: '3px 0' },
