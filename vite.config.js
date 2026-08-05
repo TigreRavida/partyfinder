@@ -8,6 +8,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.png'],
+      workbox: {
+        // toma control inmediato: la nueva versión reemplaza al cache viejo sin
+        // esperar a que se cierren todas las pestañas (evita ver versiones viejas)
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+      },
       manifest: {
         name: 'NEMO',
         short_name: 'NEMO',
