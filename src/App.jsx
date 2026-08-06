@@ -9,6 +9,7 @@ import Miembros from './pages/Miembros';
 import Spot from './pages/Spot';
 import Menu from './pages/Menu';
 import Splash from './pages/Splash';
+import Notifier from './components/Notifier';
 import Timetable from './pages/Timetable';
 import Perfil from './pages/Perfil';
 import { loadSession } from './lib/db';
@@ -36,6 +37,7 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <Frame>
+        <Notifier />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/spots" element={<Spots />} />
