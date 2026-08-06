@@ -5,7 +5,7 @@ import { metersToLatLon, insideVenue, venueCenter, VENUE } from './venue';
 
 // ---- SIMULADOR (para testeo) ----
 // Poné SIM=true para probar desde casa; SIM=false usa el GPS real del navegador.
-export const SIM = true;
+export const SIM = false;
 
 // posición inicial: un punto ALEATORIO pero DENTRO del perímetro real del predio.
 function randomStartMeters() {

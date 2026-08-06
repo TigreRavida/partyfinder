@@ -189,6 +189,34 @@ export async function updateSpotPos(id, x, y) {
   if (error) { console.error('updateSpotPos:', error.message); throw error; }
 }
 
+/* FAVORITOS DE GRUPO (compartidos en Supabase) */
+// marca/desmarca un set como favorito de este miembro
+export async function setGroupFav(group, setId, member, on) {
+  if (on) {
+    const { error } = await supabase.from('set_favs')
+      .upsert({ group_code: group, set_id: setId, member }, { onConflict: 'group_code,set_id,member' });
+    if (error) { console.error('setGroupFav:', error.message); throw error; }
+  } else {
+    const { error } = await supabase.from('set_favs')
+      .delete().eq('group_code', group).eq('set_id', setId).eq('member', member);
+    if (error) { console.error('setGroupFav del:', error.message); throw error; }
+  }
+}
+// trae todos los favoritos del grupo → { set_id: [member, member, ...] }
+export async function fetchGroupFavs(group) {
+  const { data } = await supabase.from('set_favs').select('set_id, member').eq('group_code', group);
+  const map = {};
+  for (const r of (data || [])) (map[r.set_id] ??= []).push(r.member);
+  return map;
+}
+export function subscribeGroupFavs(group, onChange) {
+  const ch = supabase.channel('favs:' + group + ':' + Math.random().toString(36).slice(2))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'set_favs', filter: `group_code=eq.${group}` },
+      () => onChange())
+    .subscribe();
+  return () => supabase.removeChannel(ch);
+}
+
 export function subscribeSpots(group, onChange) {
   const ch = supabase.channel('spots:' + group + ':' + Math.random().toString(36).slice(2))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'spots', filter: `group_code=eq.${group}` }, onChange)

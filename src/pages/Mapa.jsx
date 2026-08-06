@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { VENUE, latLonToFrac, stageAt, insideVenue, metersToLatLon } from '../lib/venue';
+import { VENUE, MAPS, latLonToFrac, stageAt, insideVenue, metersToLatLon } from '../lib/venue';
 import { loadSession, fetchPresence, subscribePresence, upsertPresence, setMyStatus,
   createSpot, fetchSpots, deleteSpot, renameSpot, updateSpotPos, subscribeSpots, deviceId } from '../lib/db';
 import { SIM, simXY, simSubscribe, simMove, watchPosition, readBattery } from '../lib/geo';
@@ -19,6 +19,7 @@ export default function Mapa() {
   const [statusEdit, setStatusEdit] = useState(false);
   const [draft, setDraft] = useState('');
   const [view, setView] = useState(null);
+  const [mapKey, setMapKey] = useState('sat');  // 'sat' | 'techno'
   const [pins, setPins] = useState([]);           // puntos de encuentro guardados
   const [pinView, setPinView] = useState(null);   // pin tocado (editar/eliminar)
   const [pinDraft, setPinDraft] = useState('');   // nombre al crear/editar
@@ -126,22 +127,21 @@ export default function Mapa() {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const r = canvas.getBoundingClientRect();
-    // punto relativo al centro del lienzo (donde está el transformOrigin)
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
     let dx = clientX - cx;
     let dy = clientY - cy;
-    // deshacer zoom
     dx /= zoom; dy /= zoom;
-    // el lienzo sin rotar mide (box.h) x (box.h*aspect); tras rotate(90deg)
-    // su ancho visual = box.h*aspect y alto visual = box.h.
-    // deshacer rotación 90° horaria: (x',y') → (y', -x')
-    const lw = box.h;                 // ancho del lienzo sin rotar
-    const lh = box.h * VENUE.aspect;  // alto del lienzo sin rotar
-    // coords dentro del lienzo sin rotar, con origen en el centro:
-    const ux = dy;      // inversa de la rotación
-    const uy = -dx;
-    // pasar a fracción 0..1 (origen esquina sup-izq del lienzo sin rotar)
+    const M = MAPS[mapKey];
+    const lw = M.rotate ? box.h : box.w;
+    const lh = lw * M.aspect;
+    let ux, uy;
+    if (M.rotate) {
+      // deshacer rotación 90° horaria: (dx,dy) → (dy, -dx)
+      ux = dy; uy = -dx;
+    } else {
+      ux = dx; uy = dy;
+    }
     const u = (ux + lw / 2) / lw;
     const v = (uy + lh / 2) / lh;
     if (u < 0 || u > 1 || v < 0 || v > 1) return null;
@@ -233,10 +233,12 @@ export default function Mapa() {
   };
   const onTouchEnd = () => { gestures.current.panning = false; if (zoom < 1.05) { setZoom(1); setPan({ x: 0, y: 0 }); } };
 
+  const M = MAPS[mapKey];
+  const lienzoW = M.rotate ? box.h : box.w;
+
   return (
     <div style={S.root}>
-      {/* foto satelital rotada 90° para llenar la pantalla vertical completa.
-          La imagen es panorámica (ancha); al rotarla queda alta y ocupa todo. */}
+      {/* mapa: satelital (rotado 90°) o techno (vertical, sin rotar) */}
       <div ref={stageRef} style={S.stage}
         onTouchStart={onTouchStart}
         onTouchMove={(e) => { if (dragPin.current) onPinMove(e); else onTouchMove(e); }}
@@ -245,22 +247,22 @@ export default function Mapa() {
         onMouseUp={() => { if (dragPin.current) onPinUp(); }}>
         <div ref={canvasRef} style={{
           position: 'relative',
-          // el lienzo (sin rotar) mide: ancho = altoPantalla, alto = altoPantalla*aspect.
-          // al rotar 90°, su ancho visual pasa a ser el alto de pantalla (llena vertical).
-          width: box.h,
-          height: box.h * VENUE.aspect,
-          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom}) rotate(90deg)`,
+          // satelital: lienzo ancho=box.h y se rota 90° (llena vertical).
+          // techno: ya es vertical, lienzo ancho=box.w, sin rotar.
+          width: M.rotate ? box.h : box.w,
+          height: (M.rotate ? box.h : box.w) * M.aspect,
+          transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})${M.rotate ? ' rotate(90deg)' : ''}`,
           transformOrigin: 'center',
           flexShrink: 0,
         }}>
-          <img src={VENUE.image} alt="Loveland"
+          <img src={M.image} alt="Loveland"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', display: 'block' }}
             draggable={false} />
           {/* pines de punto de encuentro */}
           <div style={{ position: 'absolute', inset: 0 }}>
             {pins.map((p) => {
-              const px = p.x * box.h;
-              const py = p.y * box.h * VENUE.aspect;
+              const px = p.x * lienzoW;
+              const py = p.y * lienzoW * M.aspect;
               return (
                 <button key={p.id}
                   onMouseDown={(e) => onPinDown(e, p)}
@@ -276,15 +278,15 @@ export default function Mapa() {
           <div style={{ position: 'absolute', inset: 0 }}>
             {members.map((m) => {
               if (m.lat == null) return null;
-              const f = latLonToFrac(m.lat, m.lon);
-              const px = f.u * box.h;
-              const py = f.v * box.h * VENUE.aspect;
+              const f = latLonToFrac(m.lat, m.lon, mapKey);
+              const px = f.u * lienzoW;
+              const py = f.v * lienzoW * M.aspect;
               return (
                 <button key={m.member}
                   onClick={() => { if (m.mine) { setDraft(m.status ?? ''); setStatusEdit(true); } else setView(m); }}
                   style={{ ...S.person, left: px, top: py }}>
-                  <span style={{ ...S.dot, background: m.mine ? 'var(--amber)' : m.stale ? 'var(--ink-faint)' : 'var(--magenta)',
-                    boxShadow: m.stale ? 'none' : `0 0 8px ${m.mine ? '#FFB020' : '#FF3DB8'}` }} />
+                  <span style={{ ...S.dot, background: m.mine ? 'var(--amber)' : m.stale ? 'var(--ink-faint)' : M.dotColor,
+                    boxShadow: m.stale ? 'none' : `0 0 8px ${m.mine ? '#FFB020' : M.dotColor}` }} />
                   <span style={{ ...S.name, color: m.mine ? 'var(--amber)' : '#fff' }}>
                     {m.member}
                   </span>
@@ -306,7 +308,9 @@ export default function Mapa() {
           {VENUE.name.toUpperCase()} · {active} {showMon ? '▲' : '▼'}
         </button>
         )}
-        <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Line-up">📅</button>
+        <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Timetable">TIMETABLE</button>
+        <button style={{ ...S.pill, ...S.pillSwap }}
+          onClick={() => setMapKey((k) => k === 'sat' ? 'techno' : 'sat')} title="Cambiar mapa">🔄</button>
         <button style={{ ...S.pill, ...S.pillPin }}
           onClick={addPin} title="Agregar punto de encuentro">📍</button>
       </div>
@@ -328,6 +332,10 @@ export default function Mapa() {
             <span style={S.stageV}>{monitor.predio}</span>
           </div>
         </div>
+      )}
+
+      {!SIM && !myLL && (
+        <div style={S.gpsBanner}>📍 Buscando tu ubicación… activá el GPS y permití el acceso</div>
       )}
 
       {lowBatt.length > 0 && (
@@ -477,6 +485,7 @@ const S = {
   pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', whiteSpace: 'nowrap' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
+  pillSwap: { border: '1.5px solid var(--cyan)', boxShadow: '0 0 10px rgba(53,231,225,0.5)', padding: '8px 12px' },
   pillPin: { border: '1.5px solid #FF3B3B', boxShadow: '0 0 10px rgba(255,59,59,0.6)', padding: '8px 12px' },
   pillPinOn: { background: '#FF3B3B', boxShadow: '0 0 18px rgba(255,59,59,1)', transform: 'scale(1.18)', borderColor: '#fff' },
   pinMark: { position: 'absolute', transform: 'translate(-50%,-100%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, background: 'none', padding: 0, whiteSpace: 'nowrap', zIndex: 5 },
@@ -490,6 +499,7 @@ const S = {
   rowSm: { display: 'flex', justifyContent: 'space-between', padding: '2.5px 0' },
   stageK: { color: 'var(--ink-dim)', fontSize: 12.5, fontWeight: 700, letterSpacing: 1 },
   stageV: { color: 'var(--magenta)', fontSize: 13, fontWeight: 900 },
+  gpsBanner: { position: 'absolute', top: 'calc(env(safe-area-inset-top) + 58px)', left: 12, right: 12, background: 'rgba(53,231,225,0.95)', color: '#04231F', fontSize: 13, fontWeight: 800, padding: '10px 14px', borderRadius: 12, textAlign: 'center', zIndex: 15 },
   battChip: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 20px)', left: 20, background: 'rgba(20,6,8,0.92)', border: '1.5px solid var(--bad)', borderRadius: 999, padding: '8px 14px', color: '#fff', fontSize: 12, fontWeight: 900, boxShadow: '0 0 10px rgba(255,59,59,0.5)', zIndex: 12 },
   battList: { position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 58px)', left: 20, maxWidth: 220, background: 'rgba(12,8,14,0.97)', border: '1.5px solid var(--bad)', borderRadius: 14, padding: 12, zIndex: 13, boxShadow: '0 8px 30px rgba(0,0,0,0.6)' },
   battRow: { display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--ink)', fontSize: 13, fontWeight: 700, padding: '3px 0' },
