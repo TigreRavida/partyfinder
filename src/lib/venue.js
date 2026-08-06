@@ -28,25 +28,20 @@ export const VENUE = {
 
 // transformación calibrada lat/lon → (u,v) fracción de imagen [0..1]
 // (ajuste lineal de mínimos cuadrados contra los 6 escenarios visibles)
-// --- SATELITAL (por defecto): imagen horizontal, se rota 90° en pantalla ---
+// --- ambos mapas comparten la MISMA calibración (misma imagen base, distinto estilo) ---
 const TU = [57.75510193, 129.75363503, -7072.48892975];
 const TV = [82.22754678, -151.09604564, 7517.14685445];
-// --- TECHNO (alternativo): imagen ya vertical, NO se rota ---
-const TU_T = [-136.57275622105024, 185.56090645406232, -9059.240595321024];
-const TV_T = [66.18700796512142, 110.28126611235821, -6093.35615177163];
 
-// metadatos de cada mapa (para alternar)
+// metadatos de cada mapa (mismo aspect y rotación; solo cambia imagen y color de puntos)
 export const MAPS = {
-  sat:    { image: '/loveland.jpeg',        aspect: 626 / 1264, rotate: true,  dotColor: 'var(--magenta)' },
-  techno: { image: '/loveland-techno.jpeg', aspect: 1455 / 719, rotate: false, dotColor: '#FF7A1A' },
+  sat:    { image: '/loveland.jpeg',        aspect: 627 / 1261, rotate: true, dotColor: 'var(--magenta)' },
+  techno: { image: '/loveland-techno.jpeg', aspect: 627 / 1261, rotate: true, dotColor: '#FF7A1A' },
 };
 
-export function latLonToFrac(lat, lon, map = 'sat') {
-  const u = map === 'techno' ? TU_T : TU;
-  const v = map === 'techno' ? TV_T : TV;
+export function latLonToFrac(lat, lon) {
   return {
-    u: u[0]*lon + u[1]*lat + u[2],
-    v: v[0]*lon + v[1]*lat + v[2],
+    u: TU[0]*lon + TU[1]*lat + TU[2],
+    v: TV[0]*lon + TV[1]*lat + TV[2],
   };
 }
 export function gpsToFrac(lat, lon) { return latLonToFrac(lat, lon); }
