@@ -24,9 +24,40 @@ export default function Perfil() {
 
   const changeAvatar = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    try { const url = await uploadAvatar(session.group, session.name, file); setAvatar(url); }
-    catch (err) { alert('No se pudo subir: ' + err.message); }
+    try {
+      // redimensionar la foto antes de subir (las fotos de celular pesan varios MB
+      // y pueden crashear la app o fallar la subida). La achicamos a 400px.
+      const small = await resizeImage(file, 400);
+      const url = await uploadAvatar(session.group, session.name, small);
+      setAvatar(url);
+    } catch (err) {
+      alert('No se pudo subir la foto: ' + (err?.message || 'error'));
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';  // permite reelegir el mismo archivo
+    }
   };
+
+  // achica una imagen a maxSize px (lado mayor) y la devuelve como Blob JPEG
+  const resizeImage = (file, maxSize) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > height && width > maxSize) { height = height * maxSize / width; width = maxSize; }
+      else if (height > maxSize) { width = width * maxSize / height; height = maxSize; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error('no se pudo procesar la imagen')); return; }
+        blob.name = 'avatar.jpg';
+        resolve(blob);
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('imagen inválida')); };
+    img.src = url;
+  });
 
   const chooseAvatar = async (url) => {
     setAvatar(url);

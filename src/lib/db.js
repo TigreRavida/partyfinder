@@ -41,10 +41,13 @@ export async function findMyIdentity(group) {
 }
 export async function upsertPresence({ group, member, lat, lon, accuracy, battery, status, avatar_url }) {
   const row = {
-    group_code: group, member, lat, lon, accuracy: accuracy ?? 8,
+    group_code: group, member,
     device_id: deviceId(),
     updated_at: new Date().toISOString(),
   };
+  // solo incluir lat/lon si vienen con valor (no pisar una ubicación existente
+  // cuando registramos presencia sin GPS, ej. al entrar o abrir el chat)
+  if (lat != null && lon != null) { row.lat = lat; row.lon = lon; row.accuracy = accuracy ?? 8; }
   if (battery !== undefined) row.battery = battery;
   if (status !== undefined) row.status = status;
   if (avatar_url !== undefined) row.avatar_url = avatar_url;
@@ -68,9 +71,8 @@ export async function setMyStatus(group, member, status) {
 }
 // subir avatar del usuario (reusa el bucket spot-photos, carpeta avatars/)
 export async function uploadAvatar(group, member, file) {
-  const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase();
-  const path = `avatars/${group}_${member}_${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from('spot-photos').upload(path, file, { upsert: true });
+  const path = `avatars/${group}_${member}_${Date.now()}.jpg`;
+  const { error: upErr } = await supabase.storage.from('spot-photos').upload(path, file, { upsert: true, contentType: 'image/jpeg' });
   if (upErr) { console.error('uploadAvatar:', upErr.message); throw upErr; }
   const { data: pub } = supabase.storage.from('spot-photos').getPublicUrl(path);
   const url = pub.publicUrl;

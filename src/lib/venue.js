@@ -28,13 +28,11 @@ export const VENUE = {
 
 // transformación calibrada lat/lon → (u,v) fracción de imagen [0..1]
 // (ajuste lineal de mínimos cuadrados contra los 6 escenarios visibles)
-// --- ambos mapas comparten la MISMA calibración (misma imagen base, distinto estilo) ---
+// --- ÚNICO mapa: el techno (se quitó el cambio de mapa) ---
 const TU = [57.75510193, 129.75363503, -7072.48892975];
 const TV = [82.22754678, -151.09604564, 7517.14685445];
 
-// metadatos de cada mapa (mismo aspect y rotación; solo cambia imagen y color de puntos)
 export const MAPS = {
-  sat:    { image: '/loveland.jpeg',        aspect: 627 / 1261, rotate: true, dotColor: 'var(--magenta)' },
   techno: { image: '/loveland-techno.jpeg', aspect: 627 / 1261, rotate: true, dotColor: '#FF7A1A' },
 };
 

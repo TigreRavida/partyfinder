@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveSession, findMyIdentity } from '../lib/db';
+import { saveSession, findMyIdentity, upsertPresence } from '../lib/db';
 
 export default function Onboarding() {
   const nav = useNavigate();
@@ -22,6 +22,9 @@ export default function Onboarding() {
       }
     } catch {}
     saveSession({ name: finalName, group: g });
+    // registrar presencia al entrar (sin ubicación todavía) para que aparezca en
+    // el chat aunque no haya abierto el mapa. La ubicación se agrega al abrir el mapa.
+    try { await upsertPresence({ group: g, member: finalName, lat: null, lon: null }); } catch {}
     nav('/menu');
   };
 

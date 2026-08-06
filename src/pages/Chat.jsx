@@ -14,6 +14,8 @@ export default function Chat() {
 
   const refresh = useCallback(() => {
     if (!session) return;
+    // registrar mi presencia al abrir el chat (por si nunca abrí el mapa)
+    upsertPresence({ group: session.group, member: session.name, lat: null, lon: null }).catch(() => {});
     fetchPresence(session.group).then((r) => { setRows(r); const me = r.find((x) => x.member === session.name); if (me?.avatar_url) setMyAvatar(me.avatar_url); }).catch(() => {});
     fetchConvUnread(session.group, session.name).then(setUnread).catch(() => {});
   }, [session?.group]);

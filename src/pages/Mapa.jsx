@@ -19,7 +19,7 @@ export default function Mapa() {
   const [statusEdit, setStatusEdit] = useState(false);
   const [draft, setDraft] = useState('');
   const [view, setView] = useState(null);
-  const [mapKey, setMapKey] = useState('sat');  // 'sat' | 'techno'
+  const mapKey = 'techno';  // único mapa
   const [pins, setPins] = useState([]);           // puntos de encuentro guardados
   const [pinView, setPinView] = useState(null);   // pin tocado (editar/eliminar)
   const [pinDraft, setPinDraft] = useState('');   // nombre al crear/editar
@@ -309,16 +309,6 @@ export default function Mapa() {
         </button>
         )}
         <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Timetable">TIMETABLE</button>
-        <button style={S.swapBtn}
-          onClick={() => setMapKey((k) => k === 'sat' ? 'techno' : 'sat')} title="Cambiar mapa">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-            stroke={mapKey === 'techno' ? '#FF7A1A' : 'var(--cyan)'} strokeWidth="1.8"
-            strokeLinecap="round" strokeLinejoin="round"
-            style={{ filter: `drop-shadow(0 0 4px ${mapKey === 'techno' ? 'rgba(255,122,26,0.8)' : 'rgba(53,231,225,0.8)'})` }}>
-            <polygon points="12 2 22 8.5 12 15 2 8.5 12 2" />
-            <polyline points="2 15.5 12 22 22 15.5" />
-          </svg>
-        </button>
         <button style={{ ...S.pill, ...S.pillPin }}
           onClick={addPin} title="Agregar punto de encuentro">📍</button>
       </div>
@@ -493,7 +483,6 @@ const S = {
   pill: { background: 'rgba(8,6,10,0.9)', border: '1.5px solid var(--violet)', borderRadius: 999, padding: '8px 14px', color: 'var(--ink)', fontSize: 12, fontWeight: 900, letterSpacing: 1, boxShadow: '0 0 8px rgba(176,107,255,0.4)', whiteSpace: 'nowrap' },
   pillLive: { border: '1.5px solid var(--cyan)', color: 'var(--cyan)', boxShadow: '0 0 12px rgba(53,231,225,0.6)' },
   pillCal: { border: '1.5px solid var(--gold)', boxShadow: '0 0 10px rgba(255,203,46,0.5)', padding: '8px 12px' },
-  swapBtn: { background: 'none', border: 'none', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   pillPin: { border: '1.5px solid #FF3B3B', boxShadow: '0 0 10px rgba(255,59,59,0.6)', padding: '8px 12px' },
   pillPinOn: { background: '#FF3B3B', boxShadow: '0 0 18px rgba(255,59,59,1)', transform: 'scale(1.18)', borderColor: '#fff' },
   pinMark: { position: 'absolute', transform: 'translate(-50%,-100%)', transformOrigin: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, background: 'none', padding: 0, whiteSpace: 'nowrap', zIndex: 5 },
