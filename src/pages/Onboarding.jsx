@@ -35,9 +35,15 @@ export default function Onboarding() {
       <img src="/onboarding-bg.jpeg" alt="NEMO" style={S.bg} draggable={false} />
       <div style={S.overlay}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="TU NOMBRE"
+          type="text" autoComplete="off" autoCorrect="off" spellCheck="false"
+          name={`nm_${Math.random().toString(36).slice(2, 8)}`} data-lpignore="true" data-1p-ignore="true"
+          aria-autocomplete="none"
           style={{ ...S.field, top: '47.5%' }} />
         <input value={group} onChange={(e) => setGroup(e.target.value.toUpperCase())} placeholder="NOMBRE DE GRUPO"
           disabled={!!preset} onKeyDown={(e) => e.key === 'Enter' && go()}
+          type="text" autoComplete="off" autoCorrect="off" spellCheck="false"
+          name={`gr_${Math.random().toString(36).slice(2, 8)}`} data-lpignore="true" data-1p-ignore="true"
+          aria-autocomplete="none"
           style={{ ...S.field, top: '64%' }} />
         <button onClick={go} disabled={!ready}
           className={ready ? 'neon-box' : ''}

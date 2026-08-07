@@ -109,10 +109,14 @@ export default function Perfil() {
 
         <label style={S.label}>TU NOMBRE</label>
         <input className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.input }}
+          type="text" autoComplete="off" autoCorrect="off" spellCheck="false"
+          name={`pn_${Math.random().toString(36).slice(2, 8)}`} data-lpignore="true" data-1p-ignore="true" aria-autocomplete="none"
           value={name} onChange={(e) => setName(e.target.value)} placeholder="Cómo te dicen" />
 
         <label style={S.label}>TU ESTADO</label>
         <input className="neon-box" style={{ '--nc': 'var(--magenta)', ...S.input }}
+          type="text" autoComplete="off" autoCorrect="off" spellCheck="false"
+          name={`ps_${Math.random().toString(36).slice(2, 8)}`} data-lpignore="true" data-1p-ignore="true" aria-autocomplete="none"
           value={status} onChange={(e) => setStatus(e.target.value)} maxLength={60}
           placeholder="en la barra 🍺 · llegando…" />
 
