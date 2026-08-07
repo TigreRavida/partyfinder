@@ -10,6 +10,35 @@ export default function Chat() {
   const nav = useNavigate();
   const session = loadSession();
   const [myAvatar, setMyAvatar] = useState(null);
+  const [notifOn, setNotifOn] = useState(
+    typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  );
+
+  const enableNotifs = async () => {
+    if (typeof Notification === 'undefined') { alert('Este navegador no soporta notificaciones.'); return; }
+    if (Notification.permission === 'granted') {
+      // ya está: mandar una de prueba para confirmar
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        if (reg?.showNotification) await reg.showNotification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
+        else new Notification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
+      } catch {}
+      setNotifOn(true);
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      alert('Las notificaciones están bloqueadas. Activalas desde los ajustes del navegador para este sitio.');
+      return;
+    }
+    const p = await Notification.requestPermission();
+    setNotifOn(p === 'granted');
+    if (p === 'granted') {
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        if (reg?.showNotification) await reg.showNotification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
+      } catch {}
+    }
+  };
   const [rows, setRows] = useState([]);
   const [unread, setUnread] = useState({});
 
@@ -50,10 +79,14 @@ export default function Chat() {
       <div style={S.head}>
         <div style={S.brandRow}>
           <button onClick={() => nav('/menu')} style={{ background: 'none', padding: 0 }}><span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span></button>
-          <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 800 }}>{session?.name}</span>
-            <Avatar name={session?.name} uri={myAvatar} size={36} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={enableNotifs} style={{ background: 'none', padding: 0, fontSize: 20 }}
+              title="Activar notificaciones">{notifOn ? '🔔' : '🔕'}</button>
+            <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 800 }}>{session?.name}</span>
+              <Avatar name={session?.name} uri={myAvatar} size={36} />
+            </button>
+          </div>
         </div>
         <div style={S.kicker}>CHAT</div>
         <div style={S.laser} />
