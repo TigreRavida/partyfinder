@@ -375,7 +375,11 @@ export default function Mapa() {
             </div>
             {view.status && <p style={S.vstatus}>"{view.status}"</p>}
             <p style={S.vsub}>{view.ageMs < 90e3 ? 'en evento ahora' : `visto hace ${Math.round(view.ageMs / 60000)} min`}
-              {view.battery != null ? ` · ${view.battery}% 🔋` : ''}</p>
+              {view.battery != null && (
+                <span style={{ color: view.battery <= 20 ? 'var(--bad)' : 'var(--ink-dim)', fontWeight: 700 }}>
+                  {' · '}{view.battery <= 20 ? '🪫' : '🔋'} {view.battery}%
+                </span>
+              )}</p>
             <button className="neon-box" style={{ '--nc': 'var(--cyan)', ...S.msgBtn }}
               onClick={() => nav(`/conv?kind=dm&to=${encodeURIComponent(view.member)}`)}>
               <span className="neon-text" style={{ '--nc': 'var(--cyan)' }}>✉ MENSAJE</span>

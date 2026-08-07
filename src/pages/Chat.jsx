@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadSession, fetchPresence, fetchConvUnread, subscribeConversation, upsertPresence } from '../lib/db';
+import { readBattery } from '../lib/geo';
 import { TabBar } from '../components/TabBar';
 
 import { Avatar } from '../components/Avatar';
@@ -14,8 +15,10 @@ export default function Chat() {
 
   const refresh = useCallback(() => {
     if (!session) return;
-    // registrar mi presencia al abrir el chat (por si nunca abrí el mapa)
-    upsertPresence({ group: session.group, member: session.name, lat: null, lon: null }).catch(() => {});
+    // registrar mi presencia al abrir el chat (por si nunca abrí el mapa) + batería
+    readBattery().then((battery) =>
+      upsertPresence({ group: session.group, member: session.name, lat: null, lon: null, battery })
+    ).catch(() => {});
     fetchPresence(session.group).then((r) => { setRows(r); const me = r.find((x) => x.member === session.name); if (me?.avatar_url) setMyAvatar(me.avatar_url); }).catch(() => {});
     fetchConvUnread(session.group, session.name).then(setUnread).catch(() => {});
   }, [session?.group]);
@@ -56,8 +59,11 @@ export default function Chat() {
         <button className="neon-box" style={{ '--nc': 'var(--gold)', ...S.row }} onClick={() => nav('/conv?kind=group')}>
           <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.groupIcon }}>★</div>
           <div style={{ flex: 1, textAlign: 'left' }}>
-            <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.rowName }}>Grupo · {session?.group}</div>
-            <div style={S.rowSub}>Mensaje a todo el grupo</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="neon-text" style={{ '--nc': 'var(--gold)', ...S.rowName }}>Grupo · {session?.group}</span>
+              {rows.length > 0 && <span style={S.groupCount}>👥 {rows.length}</span>}
+            </div>
+            <div style={{ ...S.rowSub, color: 'var(--ink-dim)' }}>Mensaje a todo el grupo</div>
           </div>
           {groupUnread > 0 ? <Badge n={groupUnread} c="var(--gold)" /> : null}
         </button>
@@ -104,6 +110,7 @@ const S = {
   pinned: { border: '1px solid var(--magenta)' },
   groupIcon: { width: 44, height: 44, borderRadius: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold)', fontSize: 22, fontWeight: 900 },
   rowName: { fontSize: 16, fontWeight: 900 },
+  groupCount: { fontSize: 12, fontWeight: 800, color: 'var(--gold)', background: 'rgba(255,203,46,0.12)', border: '1px solid rgba(255,203,46,0.4)', borderRadius: 999, padding: '2px 8px', flexShrink: 0 },
   batt: { fontSize: 12, fontWeight: 800, flexShrink: 0, whiteSpace: 'nowrap' },
   rowSub: { fontSize: 13, marginTop: 2 },
   badge: { borderRadius: 999, minWidth: 24, height: 24, padding: '0 8px', color: '#fff', fontSize: 13, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 8px rgba(53,231,225,0.6)' },

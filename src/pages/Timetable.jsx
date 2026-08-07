@@ -78,9 +78,9 @@ export default function Timetable() {
         <button onClick={() => setMode('all')} className={mode === 'all' ? 'neon-box' : ''}
           style={{ '--nc': 'var(--cyan)', ...S.filterBtn, color: mode === 'all' ? '#fff' : 'var(--ink-dim)' }}>TODOS</button>
         <button onClick={() => setMode('mine')} className={mode === 'mine' ? 'neon-box' : ''}
-          style={{ '--nc': 'var(--gold)', ...S.filterBtn, color: mode === 'mine' ? '#fff' : 'var(--ink-dim)' }}>★ MIS FAVORITOS</button>
+          style={{ '--nc': 'var(--gold)', ...S.filterBtn, color: mode === 'mine' ? '#fff' : 'var(--ink-dim)' }}>★ MIS FAVS</button>
         <button onClick={() => setMode('group')} className={mode === 'group' ? 'neon-box' : ''}
-          style={{ '--nc': 'var(--magenta)', ...S.filterBtn, color: mode === 'group' ? '#fff' : 'var(--ink-dim)' }}>♛ FAVORITOS GRUPO</button>
+          style={{ '--nc': 'var(--magenta)', ...S.filterBtn, color: mode === 'group' ? '#fff' : 'var(--ink-dim)' }}>♛ FAV GRUPO</button>
       </div>
 
       {/* NIVEL 2: escenarios */}
