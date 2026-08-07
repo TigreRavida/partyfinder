@@ -54,7 +54,7 @@ export default function Chat() {
           <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.groupIcon }}>★</div>
           <div style={{ flex: 1, textAlign: 'left' }}>
             <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.rowName }}>Grupo · {session?.group}</div>
-            <div style={S.rowSub}>Mensaje a todo el grupo</div>
+            <div style={{ ...S.rowSub, color: 'var(--ink-dim)' }}>Mensaje a todo el grupo</div>
           </div>
           {groupUnread > 0 ? <Badge n={groupUnread} c="var(--gold)" /> : null}
         </button>
