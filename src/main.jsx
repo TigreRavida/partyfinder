@@ -14,7 +14,16 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{ padding: 24, color: '#EAF2FF', fontFamily: 'sans-serif' }}>
           <h2 style={{ color: '#FF3DB8' }}>Algo falló al cargar</h2>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: '#8FA3C4' }}>{String(this.state.err?.stack || this.state.err)}</pre>
+          <p style={{ color: '#EAF2FF', fontSize: 15, fontWeight: 700 }}>{String(this.state.err?.message || this.state.err)}</p>
+          <button
+            onClick={() => { try { localStorage.clear(); } catch {} location.href = '/'; }}
+            style={{ margin: '16px 0', padding: '12px 20px', background: '#35E7E1', color: '#04231F', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 800 }}>
+            Reiniciar y empezar de cero
+          </button>
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ color: '#8FA3C4', fontSize: 13, cursor: 'pointer' }}>Ver detalle técnico</summary>
+            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, color: '#8FA3C4' }}>{String(this.state.err?.stack || this.state.err)}</pre>
+          </details>
         </div>
       );
     }

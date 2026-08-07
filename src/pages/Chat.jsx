@@ -29,11 +29,11 @@ export default function Chat() {
   }, [refresh]);
 
   const groupUnread = unread['group'] ?? 0;
-  const others = rows.filter((m) => m.member !== session?.name);
+  const others = rows.filter((m) => m.member && m.member !== session?.name);
   const sorted = [...others].sort((a, b) => {
     const ua = unread[`dm:${a.member}`] ?? 0, ub = unread[`dm:${b.member}`] ?? 0;
     if (ua !== ub) return ub - ua;
-    return a.member.localeCompare(b.member);
+    return (a.member || '').localeCompare(b.member || '');
   });
 
   const NEON = ['var(--orange)', 'var(--blue)', 'var(--magenta)', 'var(--green)', 'var(--violet)', 'var(--cyan)', 'var(--gold)'];
@@ -54,7 +54,7 @@ export default function Chat() {
           <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.groupIcon }}>★</div>
           <div style={{ flex: 1, textAlign: 'left' }}>
             <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.rowName }}>Grupo · {session?.group}</div>
-            <div style={S.rowSub}>Mensaje a todo el grupo</div>
+            <div style={{ ...S.rowSub, color: 'var(--ink-dim)' }}>Mensaje a todo el grupo</div>
           </div>
           {groupUnread > 0 ? <Badge n={groupUnread} c="var(--gold)" /> : null}
         </button>
