@@ -52,7 +52,7 @@ export async function upsertPresence({ group, member, lat, lon, accuracy, batter
   if (status !== undefined) row.status = status;
   if (avatar_url !== undefined) row.avatar_url = avatar_url;
   const { error } = await supabase.from('presence').upsert(row, { onConflict: 'group_code,member' });
-  if (error) console.warn('presence:', error.message);
+  if (error) console.error('⚠ upsertPresence falló (¿falta alguna columna en la tabla presence?):', error.message);
 }
 export async function fetchPresence(group) {
   const { data } = await supabase.from('presence').select('*').eq('group_code', group);

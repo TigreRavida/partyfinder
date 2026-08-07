@@ -55,8 +55,10 @@ export function watchPosition(onFix, onErr) {
 // ---- BATERÍA (web, donde esté disponible) ----
 export async function readBattery() {
   try {
-    if (!navigator.getBattery) return null;
+    if (!navigator.getBattery) { console.log('🔋 getBattery no disponible en este navegador'); return null; }
     const b = await navigator.getBattery();
-    return Math.round(b.level * 100);
-  } catch { return null; }
+    const pct = Math.round(b.level * 100);
+    console.log('🔋 batería leída:', pct + '%');
+    return pct;
+  } catch (e) { console.log('🔋 error al leer batería:', e?.message); return null; }
 }

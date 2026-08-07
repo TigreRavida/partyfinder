@@ -15,11 +15,14 @@ export default function Chat() {
 
   const refresh = useCallback(() => {
     if (!session) return;
-    // registrar mi presencia al abrir el chat (por si nunca abrí el mapa) + batería
-    readBattery().then((battery) =>
-      upsertPresence({ group: session.group, member: session.name, lat: null, lon: null, battery })
-    ).catch(() => {});
-    fetchPresence(session.group).then((r) => { setRows(r); const me = r.find((x) => x.member === session.name); if (me?.avatar_url) setMyAvatar(me.avatar_url); }).catch(() => {});
+    // registrar mi presencia al abrir el chat (por si nunca abrí el mapa) + batería,
+    // y RECIÉN DESPUÉS leer la lista, así mi batería recién guardada ya aparece.
+    readBattery()
+      .then((battery) => upsertPresence({ group: session.group, member: session.name, lat: null, lon: null, battery }))
+      .catch(() => {})
+      .finally(() => {
+        fetchPresence(session.group).then((r) => { setRows(r); const me = r.find((x) => x.member === session.name); if (me?.avatar_url) setMyAvatar(me.avatar_url); }).catch(() => {});
+      });
     fetchConvUnread(session.group, session.name).then(setUnread).catch(() => {});
   }, [session?.group]);
 
