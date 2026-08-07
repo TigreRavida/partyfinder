@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { loadSession, subscribeConversation } from '../lib/db';
+import { loadSession, subscribeConversation, fetchConvUnread } from '../lib/db';
 
-// Escucha mensajes nuevos en todo momento (mientras la app está abierta o de
-// fondo) y dispara UNA notificación "tenés mensajes sin leer". No repite hasta
-// que el usuario vuelve a la app (visibilitychange resetea el flag).
+// Notifica cuando llega un mensaje y el usuario no está mirando el chat.
+// Usa el service worker (registration.showNotification) que es más robusto que
+// new Notification() y es la ÚNICA vía que funciona en iOS.
+// LÍMITE: si la app está TOTALMENTE cerrada, esto no corre (haría falta push real
+// con backend). Funciona con la app abierta o recién puesta en segundo plano.
 export default function Notifier() {
   const notifiedRef = useRef(false);
 
@@ -11,35 +13,42 @@ export default function Notifier() {
     const session = loadSession();
     if (!session) return;
 
-    // pedir permiso de notificaciones una vez (si el navegador lo soporta)
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {});
     }
 
-    const notify = () => {
-      // no molestar si la app está visible en primer plano (ya lo ve)
-      if (document.visibilityState === 'visible') return;
-      if (notifiedRef.current) return;              // ya avisé, no repito
+    const showNotif = async () => {
+      if (document.visibilityState === 'visible') return;   // ya lo ve
+      if (notifiedRef.current) return;                       // ya avisé
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
       notifiedRef.current = true;
+      const opts = { body: 'Tenés mensajes sin leer 💬', icon: '/icon-192.png',
+        badge: '/icon-192.png', tag: 'nemo-unread', renotify: true, vibrate: [200] };
       try {
-        new Notification('NEMO', { body: 'Tenés mensajes sin leer 💬', icon: '/icon-192.png', tag: 'nemo-unread' });
+        // preferir el service worker (funciona en iOS y en segundo plano)
+        const reg = await navigator.serviceWorker?.getRegistration();
+        if (reg?.showNotification) { await reg.showNotification('NEMO', opts); return; }
       } catch {}
-      // vibrar si se puede
-      try { navigator.vibrate?.(200); } catch {}
+      // fallback: notificación directa (desktop)
+      try { new Notification('NEMO', opts); } catch {}
+    };
+
+    const updateTitle = async () => {
+      try {
+        const counts = await fetchConvUnread(session.group, session.name);
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        document.title = total > 0 ? `(${total}) NEMO` : 'NEMO';
+      } catch {}
     };
 
     const unsub = subscribeConversation(session.group, (m) => {
-      // solo si el mensaje NO es mío y me corresponde (grupo, o DM hacia mí)
       if (m.author === session.name) return;
-      if (m.kind === 'group' || (m.kind === 'dm' && m.recipient === session.name)) {
-        notify();
-      }
+      if (m.kind === 'group' || (m.kind === 'dm' && m.recipient === session.name)) { showNotif(); updateTitle(); }
     });
 
-    // cuando el usuario vuelve a la app, reseteamos el flag (para el próximo aviso)
-    const onVis = () => { if (document.visibilityState === 'visible') notifiedRef.current = false; };
+    const onVis = () => { if (document.visibilityState === 'visible') { notifiedRef.current = false; document.title = 'NEMO'; } };
     document.addEventListener('visibilitychange', onVis);
+    updateTitle();
 
     return () => { unsub(); document.removeEventListener('visibilitychange', onVis); };
   }, []);

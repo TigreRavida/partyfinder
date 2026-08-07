@@ -44,7 +44,10 @@ export default function Chat() {
       <div style={S.head}>
         <div style={S.brandRow}>
           <button onClick={() => nav('/menu')} style={{ background: 'none', padding: 0 }}><span className="neon-tube" style={{ '--nc': 'var(--cyan)', fontSize: 22, fontWeight: 900 }}>NEMO</span></button>
-          <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999 }}><Avatar name={session?.name} uri={myAvatar} size={36} /></button>
+          <button onClick={() => nav('/perfil')} style={{ background: 'none', padding: 0, borderRadius: 999, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: 'var(--ink)', fontSize: 14, fontWeight: 800 }}>{session?.name}</span>
+            <Avatar name={session?.name} uri={myAvatar} size={36} />
+          </button>
         </div>
         <div style={S.kicker}>CHAT</div>
         <div style={S.laser} />
@@ -54,7 +57,7 @@ export default function Chat() {
           <div className="neon-box" style={{ '--nc': 'var(--gold)', ...S.groupIcon }}>★</div>
           <div style={{ flex: 1, textAlign: 'left' }}>
             <div className="neon-text" style={{ '--nc': 'var(--gold)', ...S.rowName }}>Grupo · {session?.group}</div>
-            <div style={{ ...S.rowSub, color: 'var(--ink-dim)' }}>Mensaje a todo el grupo</div>
+            <div style={S.rowSub}>Mensaje a todo el grupo</div>
           </div>
           {groupUnread > 0 ? <Badge n={groupUnread} c="var(--gold)" /> : null}
         </button>
