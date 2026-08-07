@@ -20,8 +20,8 @@ export default function Chat() {
       // ya está: mandar una de prueba para confirmar
       try {
         const reg = await navigator.serviceWorker?.getRegistration();
-        if (reg?.showNotification) await reg.showNotification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
-        else new Notification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
+        if (reg?.showNotification) await reg.showNotification('¡Notificaciones activas! 🎉', { icon: '/icon-192.png' });
+        else new Notification('¡Notificaciones activas! 🎉', { icon: '/icon-192.png' });
       } catch {}
       setNotifOn(true);
       return;
@@ -35,7 +35,7 @@ export default function Chat() {
     if (p === 'granted') {
       try {
         const reg = await navigator.serviceWorker?.getRegistration();
-        if (reg?.showNotification) await reg.showNotification('NEMO', { body: '¡Notificaciones activas! 🎉', icon: '/icon-192.png' });
+        if (reg?.showNotification) await reg.showNotification('¡Notificaciones activas! 🎉', { icon: '/icon-192.png' });
       } catch {}
     }
   };

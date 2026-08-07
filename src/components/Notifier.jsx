@@ -28,9 +28,9 @@ export default function Notifier() {
         badge: '/icon-192.png', tag: 'nemo-unread', renotify: true, vibrate: [200] };
       try {
         const reg = await navigator.serviceWorker?.getRegistration();
-        if (reg?.showNotification) { await reg.showNotification('NEMO', opts); console.log('🔔 notif via SW'); return; }
+        if (reg?.showNotification) { await reg.showNotification('Tenés mensajes sin leer 💬', { ...opts, body: '' }); console.log('🔔 notif via SW'); return; }
       } catch (e) { console.log('🔔 error SW:', e?.message); }
-      try { new Notification('NEMO', opts); console.log('🔔 notif directa'); } catch (e) { console.log('🔔 error directa:', e?.message); }
+      try { new Notification('Tenés mensajes sin leer 💬', { ...opts, body: '' }); console.log('🔔 notif directa'); } catch (e) { console.log('🔔 error directa:', e?.message); }
     };
 
     const updateTitle = async () => {
