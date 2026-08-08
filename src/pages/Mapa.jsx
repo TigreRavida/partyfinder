@@ -302,7 +302,7 @@ export default function Mapa() {
       <div style={S.top}>
         <button style={S.pill} onClick={() => nav('/menu')}>‹ SALIR</button>
         <div style={{ ...S.pill, ...S.pillLive }}>
-          👥 {members.filter((m) => m.lat != null).length}
+          👥 {members.filter((m) => m.lat != null).length}/{rows.length}
         </div>
         <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Timetable">TIMETABLE</button>
         <button style={{ ...S.pill, ...S.pillPin }}
