@@ -1,36 +1,29 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { loadSession, subscribeConversation, fetchConvUnread } from '../lib/db';
 
-// Notifica cuando llega un mensaje y el usuario no está mirando el chat.
-// Usa el service worker (registration.showNotification) que es más robusto que
-// new Notification() y es la ÚNICA vía que funciona en iOS.
-// LÍMITE: si la app está TOTALMENTE cerrada, esto no corre (haría falta push real
-// con backend). Funciona con la app abierta o recién puesta en segundo plano.
+// Notifica cuando llega un mensaje y el usuario no está mirando la app.
+// Usa el service worker (showNotification) que funciona en iOS y en segundo plano.
+// LÍMITE: si la app está TOTALMENTE cerrada no corre (haría falta push real/backend).
 export default function Notifier() {
-  const notifiedRef = useRef(false);
-
   useEffect(() => {
     const session = loadSession();
     if (!session) return;
-    console.log('🔔 Notifier activo. Permiso:', ('Notification' in window) ? Notification.permission : 'no soportado');
 
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then((p) => console.log('🔔 permiso ahora:', p)).catch(() => {});
+      Notification.requestPermission().catch(() => {});
     }
 
-    const showNotif = async () => {
-      console.log('🔔 llegó mensaje. visible?', document.visibilityState, 'permiso?', Notification?.permission);
-      if (document.visibilityState === 'visible') return;   // ya lo ve
-      if (notifiedRef.current) return;                       // ya avisé
-      if (!('Notification' in window) || Notification.permission !== 'granted') { console.log('🔔 no notifico: sin permiso'); return; }
-      notifiedRef.current = true;
-      const opts = { body: 'Tenés mensajes sin leer 💬', icon: '/icon-192.png',
-        badge: '/icon-192.png', tag: 'nemo-unread', renotify: true, vibrate: [200] };
+    const showNotif = async (fromWhom) => {
+      if (document.visibilityState === 'visible') return;   // ya lo está viendo
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const title = fromWhom ? `Mensaje de ${fromWhom} 💬` : 'Tenés mensajes sin leer 💬';
+      const opts = { body: '', icon: '/icon-192.png', badge: '/icon-192.png',
+        tag: 'nemo-' + Date.now(), renotify: true, vibrate: [200] };
       try {
         const reg = await navigator.serviceWorker?.getRegistration();
-        if (reg?.showNotification) { await reg.showNotification('Tenés mensajes sin leer 💬', { ...opts, body: '' }); console.log('🔔 notif via SW'); return; }
-      } catch (e) { console.log('🔔 error SW:', e?.message); }
-      try { new Notification('Tenés mensajes sin leer 💬', { ...opts, body: '' }); console.log('🔔 notif directa'); } catch (e) { console.log('🔔 error directa:', e?.message); }
+        if (reg?.showNotification) { await reg.showNotification(title, opts); return; }
+      } catch {}
+      try { new Notification(title, opts); } catch {}
     };
 
     const updateTitle = async () => {
@@ -42,12 +35,12 @@ export default function Notifier() {
     };
 
     const unsub = subscribeConversation(session.group, (m) => {
-      console.log('🔔 realtime recibió mensaje:', m.kind, 'de', m.author);
-      if (m.author === session.name) return;
-      if (m.kind === 'group' || (m.kind === 'dm' && m.recipient === session.name)) { showNotif(); updateTitle(); }
+      if (m.author === session.name) return;   // no me notifico mis propios mensajes
+      const paraMi = m.kind === 'group' || (m.kind === 'dm' && m.recipient === session.name);
+      if (paraMi) { showNotif(m.author); updateTitle(); }
     });
 
-    const onVis = () => { if (document.visibilityState === 'visible') { notifiedRef.current = false; document.title = 'NEMO'; } };
+    const onVis = () => { if (document.visibilityState === 'visible') document.title = 'NEMO'; };
     document.addEventListener('visibilitychange', onVis);
     updateTitle();
 
