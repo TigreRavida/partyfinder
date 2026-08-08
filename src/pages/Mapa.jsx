@@ -301,13 +301,9 @@ export default function Mapa() {
       {/* barra superior horizontal */}
       <div style={S.top}>
         <button style={S.pill} onClick={() => nav('/menu')}>‹ SALIR</button>
-        {/* botón de Loveland (contador) OCULTO temporalmente — no funciona como se quiere.
-            Para reactivarlo, cambiar false por true. */}
-        {false && (
-        <button style={{ ...S.pill, ...S.pillLive }} onClick={() => setShowMon((v) => !v)}>
-          {VENUE.name.toUpperCase()} · {active} {showMon ? '▲' : '▼'}
-        </button>
-        )}
+        <div style={{ ...S.pill, ...S.pillLive }}>
+          👥 {members.filter((m) => m.lat != null).length}
+        </div>
         <button style={{ ...S.pill, ...S.pillCal }} onClick={() => nav('/lineup')} title="Timetable">TIMETABLE</button>
         <button style={{ ...S.pill, ...S.pillPin }}
           onClick={addPin} title="Agregar punto de encuentro">📍</button>

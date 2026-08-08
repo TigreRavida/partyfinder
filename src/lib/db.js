@@ -56,8 +56,7 @@ export async function upsertPresence({ group, member, lat, lon, accuracy, batter
 }
 export async function fetchPresence(group) {
   const { data, error } = await supabase.from('presence').select('*').eq('group_code', group);
-  if (error) console.error('📍 fetchPresence error:', error.message);
-  console.log(`📍 fetchPresence grupo "${group}": ${(data || []).length} personas →`, (data || []).map(r => `${r.member}(lat:${r.lat != null ? 'sí' : 'NO'})`).join(', '));
+  if (error) console.error('fetchPresence error:', error.message);
   return data ?? [];
 }
 export function subscribePresence(group, onRow) {
