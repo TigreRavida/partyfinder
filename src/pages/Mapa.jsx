@@ -47,11 +47,15 @@ export default function Mapa() {
 
   useEffect(() => {
     if (!session) { nav('/'); return; }
-    fetchPresence(session.group).then(setRows).catch(() => {});
+    const reloadPresence = () => fetchPresence(session.group).then(setRows).catch(() => {});
+    reloadPresence();
     fetchSpots(session.group).then(setPins).catch(() => {});
     const unsubPins = subscribeSpots(session.group, () => fetchSpots(session.group).then(setPins).catch(() => {}));
     const unsub = subscribePresence(session.group, (r) =>
       setRows((cur) => [...cur.filter((x) => x.member !== r.member), r]));
+    // recargar la lista COMPLETA cada 8s (no depender solo del realtime, que puede
+    // no estar habilitado o cortarse). Así siempre traemos a todos los del grupo.
+    const reloadTimer = setInterval(reloadPresence, 8000);
     // publicar mi posición
     const publish = async () => {
       const battery = await readBattery();
@@ -69,7 +73,7 @@ export default function Mapa() {
       stopWatch = watchPosition((fix) => setMyLL({ lat: fix.lat, lon: fix.lon }));
     }
     const t = setInterval(() => force((n) => n + 1), 15000);
-    return () => { unsub(); unsubPins(); clearInterval(beat); clearInterval(t); stopWatch(); };
+    return () => { unsub(); unsubPins(); clearInterval(beat); clearInterval(t); clearInterval(reloadTimer); stopWatch(); };
   }, [session?.group]);
 
   const members = useMemo(() => {
