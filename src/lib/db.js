@@ -55,7 +55,9 @@ export async function upsertPresence({ group, member, lat, lon, accuracy, batter
   if (error) console.error('⚠ upsertPresence falló (¿falta alguna columna en la tabla presence?):', error.message);
 }
 export async function fetchPresence(group) {
-  const { data } = await supabase.from('presence').select('*').eq('group_code', group);
+  const { data, error } = await supabase.from('presence').select('*').eq('group_code', group);
+  if (error) console.error('📍 fetchPresence error:', error.message);
+  console.log(`📍 fetchPresence grupo "${group}": ${(data || []).length} personas →`, (data || []).map(r => `${r.member}(lat:${r.lat != null ? 'sí' : 'NO'})`).join(', '));
   return data ?? [];
 }
 export function subscribePresence(group, onRow) {
