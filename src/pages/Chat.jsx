@@ -10,6 +10,8 @@ export default function Chat() {
   const nav = useNavigate();
   const session = loadSession();
   const [myAvatar, setMyAvatar] = useState(null);
+  const [search, setSearch] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [notifOn, setNotifOn] = useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted'
   );
@@ -70,6 +72,8 @@ export default function Chat() {
     if (ua !== ub) return ub - ua;
     return (a.member || '').localeCompare(b.member || '');
   });
+  const q = search.trim().toLowerCase();
+  const shown = q ? sorted.filter((m) => (m.member || '').toLowerCase().includes(q)) : sorted;
 
   const NEON = ['var(--orange)', 'var(--blue)', 'var(--magenta)', 'var(--green)', 'var(--violet)', 'var(--cyan)', 'var(--gold)'];
   const Badge = ({ n, c }) => <span className="neon-box" style={{ '--nc': c, ...S.badge }}>{n > 9 ? '9+' : n}</span>;
@@ -88,7 +92,17 @@ export default function Chat() {
             </button>
           </div>
         </div>
-        <div style={S.kicker}>CHAT</div>
+        <div style={S.kickerRow}>
+          <div style={S.kicker}>CHAT</div>
+          <button onClick={() => { setShowSearch((v) => !v); if (showSearch) setSearch(''); }}
+            style={S.searchBtn} title="Buscar contacto">🔍</button>
+        </div>
+        {showSearch && (
+          <input value={search} onChange={(e) => setSearch(e.target.value)} autoFocus
+            type="text" autoComplete="off" autoCorrect="off" spellCheck="false"
+            name={`sr_${Math.random().toString(36).slice(2, 8)}`} data-lpignore="true" aria-autocomplete="none"
+            placeholder="Buscar contacto…" style={S.searchInput} />
+        )}
         <div style={S.laser} />
       </div>
       <div style={S.list}>
@@ -103,7 +117,7 @@ export default function Chat() {
           </div>
           {groupUnread > 0 ? <Badge n={groupUnread} c="var(--gold)" /> : null}
         </button>
-        {sorted.map((m, i) => {
+        {shown.map((m, i) => {
           const n = unread[`dm:${m.member}`] ?? 0;
           const c = NEON[i % NEON.length];
           return (
@@ -139,6 +153,9 @@ const S = {
   brandRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   gear: { fontSize: 22, color: 'var(--ink)', background: 'none' },
   kicker: { color: 'var(--ink-dim)', fontSize: 12, fontWeight: 900, letterSpacing: 4, marginTop: 14 },
+  kickerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  searchBtn: { background: 'none', border: 'none', fontSize: 18, marginTop: 14, cursor: 'pointer', padding: '0 4px' },
+  searchInput: { width: '100%', marginTop: 10, background: 'var(--card)', border: '1.5px solid var(--card-border)', borderRadius: 12, padding: '10px 14px', color: 'var(--ink)', fontSize: 15, outline: 'none', boxSizing: 'border-box' },
   laser: { height: 2, background: 'var(--cyan)', borderRadius: 1, marginTop: 8, marginBottom: 16, boxShadow: '0 0 10px var(--cyan)' },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 16px 16px' },
   row: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: 14, marginBottom: 12 },
